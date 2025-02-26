@@ -236,9 +236,9 @@ const App: React.FC = () => {
       )}
       <Main open={open} sx={{ position: 'relative' }}>
         <DrawerHeader />
-        <Container sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Container sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {pdfFile && (
-            <Box sx={{ flexGrow: 1, position: 'relative' }}>
+            <Box sx={{ flexGrow: 1, position: 'relative', overflow: 'hidden' }}>
               <EnterFullScreen>
                 {(props) => (
                   <IconButton
@@ -262,16 +262,25 @@ const App: React.FC = () => {
                 </IconButton>
               )}
               <Box
-                sx={{
-                  height: '100%',
-                  width: '100%',
-                  position: 'relative',
-                }}
-              >
-                <Worker workerUrl={`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`}>
-                  <Viewer fileUrl={pdfFile} plugins={[fullScreenPluginInstance]} />
-                </Worker>
-              </Box>
+  sx={{
+    flexGrow: 1,
+    position: 'relative',
+    overflow: 'hidden',
+    width: '100%',
+    height: 'calc(100vh - 64px)', // Adjust height based on your app layout (64px accounts for the app bar height)
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  }}
+>
+  <Worker workerUrl={`//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`}>
+    <Viewer
+      fileUrl={pdfFile}
+      plugins={[fullScreenPluginInstance]}
+    />
+  </Worker>
+</Box>
+
             </Box>
           )}
         </Container>
