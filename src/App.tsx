@@ -13,7 +13,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
@@ -58,15 +57,16 @@ interface AppBarProps extends MuiAppBarProps {
   open?: boolean;
 }
 
+/** can we add user as param */
 const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})<AppBarProps>(({ theme, open }) => ({
+  shouldForwardProp: (prop) => prop !== 'open' && prop !== 'user',
+})<AppBarProps & { user?: any }>(({ theme, open, user }) => ({
   transition: theme.transitions.create(['margin', 'width'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
   ...(open && {
-    width: `calc(100% - ${drawerWidth}px)`,
+    width: user ? `calc(100% - ${drawerWidth}px)` : "100%",
     marginLeft: `${drawerWidth}px`,
     transition: theme.transitions.create(['margin', 'width'], {
       easing: theme.transitions.easing.easeOut,
@@ -107,6 +107,7 @@ const App: React.FC = () => {
           console.error('Error fetching PDFs from Supabase:', error.message);
         } else {
           setPdfList(data || []);
+          setPdfFile(data && data.length > 0 ? data[0].url : null);
         }
       }
     };
@@ -124,6 +125,17 @@ const App: React.FC = () => {
         });
         if (error) {
           console.error('Error upserting user in Supabase:', error.message);
+        }
+
+        // Fetch PDFs after user logs in
+        const { data: pdfData, error: pdfError } = await supabase.from('pdfs').select('*').eq('user_id', currentUser.uid).order('created_at', { ascending: false });
+        if (pdfError) {
+          console.error('Error fetching PDFs from Supabase:', pdfError.message);
+        } else {
+          setPdfList(pdfData || []);
+          if (pdfData && pdfData.length > 0) {
+            setPdfFile(pdfData[0].url);
+          }
         }
       } else {
         setUser(null);
@@ -239,7 +251,7 @@ const App: React.FC = () => {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <AppBar position="fixed" open={open}>
+      <AppBar position="fixed" open={open} user={user}>
         <Toolbar>
           <IconButton
             color="inherit"
@@ -265,7 +277,8 @@ const App: React.FC = () => {
           )}
         </Toolbar>
       </AppBar>
-      <Drawer
+      {user && (
+        <Drawer
         sx={{
           width: drawerWidth,
           flexShrink: 0,
@@ -284,6 +297,7 @@ const App: React.FC = () => {
           </IconButton>
         </DrawerHeader>
         <Divider />
+        {/** make it visible just if user */}
         <Box sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
             Upload PDF
@@ -315,10 +329,10 @@ const App: React.FC = () => {
             <ListItem
               key={pdf.id}
               sx={{
-                bgcolor: 'grey.100',
+                bgcolor: pdfFile === pdf.url ? '#daebfd' : 'grey.100',
                 borderRadius: 2,
                 mb: 1,
-                '&:hover': { bgcolor: 'grey.200' },
+                '&:hover': { bgcolor: '#daebfd' },
                 cursor: 'pointer'
               }}
               onClick={() => handlePdfSelect(pdf.url)}
@@ -340,6 +354,7 @@ const App: React.FC = () => {
           ))}
         </List>
       </Drawer>
+      )}
       <Main open={open} sx={{ position: 'relative' }}>
         <DrawerHeader />
         <Container sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
