@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -12,7 +12,15 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Typography, Input } from '@mui/material';
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
+import VideocamIcon from '@mui/icons-material/Videocam';
+import { Typography, Input, Switch, FormControlLabel, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
+import CameraMirror from './CameraMirror';
+import Metronome from './Metronome';
+import ScreenRecorder from './ScreenRecorder';
+import { User } from './types';
+import { supabase } from '../supabaseClient';
+import { cloudinaryConfig } from '../cloudinaryConfig';
 
 interface CustomDrawerProps {
   open: boolean;
@@ -22,6 +30,15 @@ interface CustomDrawerProps {
   handlePdfSelect: (url: string) => void;
   handleOpenDialog: (id: string) => void;
   handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  cameraOpen: boolean;
+  toggleCamera: () => void;
+  metronomeOpen: boolean;
+  toggleMetronome: () => void;
+  screenRecorderOpen: boolean;
+  toggleScreenRecorder: () => void;
+  videoList: { id: string, url: string }[];
+  user: User;
+  fetchVideos: () => void;
 }
 
 const drawerWidth = 400;
@@ -34,8 +51,58 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }));
 
-const CustomDrawer: React.FC<CustomDrawerProps> = ({ open, handleDrawerClose, pdfList, pdfFile, handlePdfSelect, handleOpenDialog, handleFileChange }) => {
+const CustomDrawer: React.FC<CustomDrawerProps> = ({
+  open,
+  handleDrawerClose,
+  pdfList,
+  pdfFile,
+  handlePdfSelect,
+  handleOpenDialog,
+  handleFileChange,
+  cameraOpen,
+  toggleCamera,
+  metronomeOpen,
+  toggleMetronome,
+  screenRecorderOpen,
+  toggleScreenRecorder,
+  videoList,
+  user,
+  fetchVideos,
+}) => {
   const theme = useTheme();
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [videoToDelete, setVideoToDelete] = useState<{ id: string, url: string } | null>(null);
+
+  const handleDeleteVideo = async () => {
+    if (!videoToDelete) return;
+
+    try {
+      // Delete from Supabase database
+      const { error } = await supabase.from('videos').delete().eq('id', videoToDelete.id);
+
+      if (error) {
+        console.error('Error deleting video from Supabase:', error.message);
+        return;
+      }
+
+      // Refresh video list after deletion
+      fetchVideos();
+      setOpenConfirmDialog(false);
+      setVideoToDelete(null);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+    }
+  };
+
+  const confirmDeleteVideo = (id: string, url: string) => {
+    setVideoToDelete({ id, url });
+    setOpenConfirmDialog(true);
+  };
+
+  const handleCloseConfirmDialog = () => {
+    setOpenConfirmDialog(false);
+    setVideoToDelete(null);
+  };
 
   return (
     <Drawer
@@ -56,6 +123,27 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({ open, handleDrawerClose, pd
           {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
         </IconButton>
       </DrawerHeader>
+      <Divider />
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Configuration
+        </Typography>
+        <FormControlLabel
+          control={<Switch checked={cameraOpen} onChange={toggleCamera} />}
+          label="Camera"
+        />
+        {cameraOpen && <CameraMirror open={cameraOpen} onClose={toggleCamera} />}
+        <FormControlLabel
+          control={<Switch checked={metronomeOpen} onChange={toggleMetronome} />}
+          label="Metronome"
+        />
+        {metronomeOpen && <Metronome />}
+        <FormControlLabel
+          control={<Switch checked={screenRecorderOpen} onChange={toggleScreenRecorder} />}
+          label="Screen Recorder"
+        />
+        {screenRecorderOpen && <ScreenRecorder userId={user.uid} fetchVideos={fetchVideos} />}
+      </Box>
       <Divider />
       <Box sx={{ p: 2 }}>
         <Typography variant="h6" gutterBottom>
@@ -112,6 +200,52 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({ open, handleDrawerClose, pd
           </ListItem>
         ))}
       </List>
+      <Divider />
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Videos
+        </Typography>
+        <List>
+          {videoList.map((video) => (
+            <ListItem key={video.id} sx={{ mb: 1 }}>
+              <ListItemIcon>
+                <VideoLibraryIcon color="primary" />
+              </ListItemIcon>
+              <ListItemText primary={<video src={video.url} controls style={{ width: '100%' }} />} />
+              <IconButton
+                edge="end"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  confirmDeleteVideo(video.id, video.url);
+                }}
+              >
+                <DeleteIcon color="error" />
+              </IconButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+      <Dialog
+        open={openConfirmDialog}
+        onClose={handleCloseConfirmDialog}
+        aria-labelledby="confirm-delete-dialog-title"
+        aria-describedby="confirm-delete-dialog-description"
+      >
+        <DialogTitle id="confirm-delete-dialog-title">{"Confirm Delete"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirm-delete-dialog-description">
+            Are you sure you want to delete this video?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseConfirmDialog} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteVideo} color="primary" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Drawer>
   );
 };

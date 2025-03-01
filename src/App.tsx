@@ -56,10 +56,14 @@ const App: React.FC = () => {
   const [open, setOpen] = useState(true);
   const [pdfFile, setPdfFile] = useState<string | null>(null);
   const [pdfList, setPdfList] = useState<{ id: string, url: string, file_name: string }[]>([]);
+  const [videoList, setVideoList] = useState<{ id: string, url: string }[]>([]);
   const [user, setUser] = useState<any>(null);
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [pdfToDelete, setPdfToDelete] = useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
+  const [cameraOpen, setCameraOpen] = useState<boolean>(false);
+  const [metronomeOpen, setMetronomeOpen] = useState<boolean>(false);
+  const [screenRecorderOpen, setScreenRecorderOpen] = useState<boolean>(false);
 
   const fullScreenPluginInstance = fullScreenPlugin();
   const { EnterFullScreen } = fullScreenPluginInstance;
@@ -79,6 +83,21 @@ const App: React.FC = () => {
     fetchPdfs();
   }, [user]);
 
+  const fetchVideos = async () => {
+    if (user) {
+      const { data, error } = await supabase.from('videos').select('*').eq('user_id', user.uid);
+      if (error) {
+        console.error('Error fetching videos from Supabase:', error.message);
+      } else {
+        setVideoList(data || []);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchVideos();
+  }, [user]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -92,7 +111,7 @@ const App: React.FC = () => {
           console.error('Error upserting user in Supabase:', error.message);
         }
 
-        // Fetch PDFs after user logs in
+        // Fetch PDFs and videos after user logs in
         const { data: pdfData, error: pdfError } = await supabase.from('pdfs').select('*').eq('user_id', currentUser.uid).order('created_at', { ascending: false });
         if (pdfError) {
           console.error('Error fetching PDFs from Supabase:', pdfError.message);
@@ -102,10 +121,18 @@ const App: React.FC = () => {
             setPdfFile(pdfData[0].url);
           }
         }
+
+        const { data: videoData, error: videoError } = await supabase.from('videos').select('*').eq('user_id', currentUser.uid).order('created_at', { ascending: false });
+        if (videoError) {
+          console.error('Error fetching videos from Supabase:', videoError.message);
+        } else {
+          setVideoList(videoData || []);
+        }
       } else {
         setUser(null);
         setPdfList([]);
         setPdfFile(null);
+        setVideoList([]);
       }
     });
     return () => unsubscribe();
@@ -213,6 +240,18 @@ const App: React.FC = () => {
     setIsFullScreen(!isFullScreen);
   };
 
+  const toggleCamera = () => {
+    setCameraOpen(!cameraOpen);
+  };
+
+  const toggleMetronome = () => {
+    setMetronomeOpen(!metronomeOpen);
+  };
+
+  const toggleScreenRecorder = () => {
+    setScreenRecorderOpen(!screenRecorderOpen);
+  };
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
@@ -222,6 +261,7 @@ const App: React.FC = () => {
         handleDrawerOpen={handleDrawerOpen}
         handleLogin={handleLogin}
         handleLogout={handleLogout}
+        toggleCamera={toggleCamera}
       />
       {user && (
         <CustomDrawer
@@ -232,55 +272,48 @@ const App: React.FC = () => {
           handlePdfSelect={handlePdfSelect}
           handleOpenDialog={handleOpenDialog}
           handleFileChange={handleFileChange}
+          cameraOpen={cameraOpen}
+          toggleCamera={toggleCamera}
+          metronomeOpen={metronomeOpen}
+          toggleMetronome={toggleMetronome}
+          screenRecorderOpen={screenRecorderOpen}
+          toggleScreenRecorder={toggleScreenRecorder}
+          videoList={videoList}
+          user={user}
+          fetchVideos={fetchVideos}
         />
       )}
-      <Main open={open} sx={{ position: 'relative' }}>
+      <Main open={open} sx={{ position: 'relative', display: 'flex' }}>
         <DrawerHeader />
-        <Container sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {pdfFile && (
-            <Box sx={{ flexGrow: 1, position: 'relative', overflow: 'hidden' }}>
-              <EnterFullScreen>
-                {(props) => (
+        <Container sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexGrow: 1 }}>          {pdfFile && (
+            <Box sx={{ flexGrow: 1, position: 'relative', overflow: 'hidden', display: 'flex' }}>
+              <Box sx={{ flexGrow: 1, position: 'relative', overflow: 'auto' }}>
+                <EnterFullScreen>
+                  {(props) => (
+                    <IconButton
+                      color="inherit"
+                      aria-label="toggle full screen"
+                      onClick={props.onClick}
+                      sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}
+                    >
+                      <FullscreenIcon />
+                    </IconButton>
+                  )}
+                </EnterFullScreen>
+                {isFullScreen && (
                   <IconButton
                     color="inherit"
-                    aria-label="toggle full screen"
-                    onClick={props.onClick}
+                    aria-label="exit full screen"
+                    onClick={toggleFullScreen}
                     sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}
                   >
-                    <FullscreenIcon />
+                    <FullscreenExit />
                   </IconButton>
                 )}
-              </EnterFullScreen>
-              {isFullScreen && (
-                <IconButton
-                  color="inherit"
-                  aria-label="exit full screen"
-                  onClick={toggleFullScreen}
-                  sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}
-                >
-                  <FullscreenExit />
-                </IconButton>
-              )}
-              <Box
-  sx={{
-    flexGrow: 1,
-    position: 'relative',
-    overflow: 'hidden',
-    width: '100%',
-    height: 'calc(100vh - 64px)', // Adjust height based on your app layout (64px accounts for the app bar height)
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  }}
->
-  <Worker workerUrl={`//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`}>
-    <Viewer
-      fileUrl={pdfFile}
-      plugins={[fullScreenPluginInstance]}
-    />
-  </Worker>
-</Box>
-
+                <Worker workerUrl={`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`}>
+                  <Viewer fileUrl={pdfFile} plugins={[fullScreenPluginInstance]} />
+                </Worker>
+              </Box>
             </Box>
           )}
         </Container>
