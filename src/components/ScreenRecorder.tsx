@@ -18,32 +18,66 @@ const ScreenRecorder: React.FC<ScreenRecorderProps> = ({ userId, fetchVideos }) 
 
   const startRecording = async () => {
     try {
-      const videoStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const combinedStream = new MediaStream([...videoStream.getTracks(), ...audioStream.getTracks()]);
-
+      // Capture screen (including system audio)
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: { echoCancellation: false, noiseSuppression: false }
+      });
+  
+      // Capture microphone audio
+      const micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true }
+      });
+  
+      // Get audio tracks
+      const screenAudio = screenStream.getAudioTracks();
+      const micAudio = micStream.getAudioTracks();
+  
+      // Create an AudioContext to mix the audio
+      const audioContext = new AudioContext();
+      const destination = audioContext.createMediaStreamDestination();
+  
+      // Connect screen audio (if available)
+      if (screenAudio.length > 0) {
+        const screenSource = audioContext.createMediaStreamSource(new MediaStream(screenAudio));
+        screenSource.connect(destination);
+      }
+  
+      // Connect microphone audio
+      if (micAudio.length > 0) {
+        const micSource = audioContext.createMediaStreamSource(new MediaStream(micAudio));
+        micSource.connect(destination);
+      }
+  
+      // Combine video + mixed audio into one stream
+      const combinedStream = new MediaStream([
+        ...screenStream.getVideoTracks(),
+        ...destination.stream.getAudioTracks()
+      ]);
+  
+      // Start recording
       mediaRecorderRef.current = new MediaRecorder(combinedStream);
-
+      chunksRef.current = [];
+  
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
-
+  
       mediaRecorderRef.current.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        setVideoUrl(url);
-        chunksRef.current = [];
+        setVideoUrl(URL.createObjectURL(blob));
         setOpenDialog(true);
       };
-
+  
       mediaRecorderRef.current.start();
       setRecording(true);
     } catch (error) {
       console.error('Error starting screen recording:', error);
     }
   };
+  
 
   const stopRecording = () => {
     if (mediaRecorderRef.current) {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -13,7 +13,6 @@ import ListItemText from '@mui/material/ListItemText';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
-import VideocamIcon from '@mui/icons-material/Videocam';
 import { Typography, Input, Switch, FormControlLabel, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
 import CameraMirror from './CameraMirror';
 import Metronome from './Metronome';
@@ -21,6 +20,7 @@ import ScreenRecorder from './ScreenRecorder';
 import { User } from './types';
 import { supabase } from '../supabaseClient';
 import { cloudinaryConfig } from '../cloudinaryConfig';
+import HinduMusicDrone from './HinduMusicDrone';
 
 interface CustomDrawerProps {
   open: boolean;
@@ -72,6 +72,18 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
   const theme = useTheme();
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [videoToDelete, setVideoToDelete] = useState<{ id: string, url: string } | null>(null);
+
+  useEffect(() => {
+    if (!cameraOpen) {
+      const videoElement = document.querySelector('video');
+      if (videoElement && videoElement.srcObject) {
+        const stream = videoElement.srcObject as MediaStream;
+        const tracks = stream.getTracks();
+        tracks.forEach(track => track.stop());
+        videoElement.srcObject = null;
+      }
+    }
+  }, [cameraOpen]);
 
   const handleDeleteVideo = async () => {
     if (!videoToDelete) return;
@@ -143,6 +155,7 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
           label="Screen Recorder"
         />
         {screenRecorderOpen && <ScreenRecorder userId={user.uid} fetchVideos={fetchVideos} />}
+        <HinduMusicDrone />
       </Box>
       <Divider />
       <Box sx={{ p: 2 }}>

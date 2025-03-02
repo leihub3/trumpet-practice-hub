@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -18,6 +18,7 @@ import { FullscreenExit } from '@mui/icons-material';
 import CustomAppBar from './components/CustomAppBar';
 import CustomDrawer from './components/CustomDrawer';
 import { cloudinaryConfig } from './cloudinaryConfig';
+import { io, Socket } from 'socket.io-client';
 
 const drawerWidth = 400;
 
@@ -50,6 +51,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 const pdfjsVersion = '3.0.279'; // Specify the compatible version of pdfjs-dist
 GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
+const SERVER_URL = 'http://localhost:5000';
 
 const App: React.FC = () => {
   const theme = useTheme();
@@ -64,6 +66,13 @@ const App: React.FC = () => {
   const [cameraOpen, setCameraOpen] = useState<boolean>(false);
   const [metronomeOpen, setMetronomeOpen] = useState<boolean>(false);
   const [screenRecorderOpen, setScreenRecorderOpen] = useState<boolean>(false);
+  const [isSharing, setIsSharing] = useState<boolean>(false);
+  const [remoteStreams, setRemoteStreams] = useState<MediaStream[]>([]);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRefs = useRef<HTMLVideoElement[]>([]);
+  const socketRef = useRef<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const peerConnections = useRef<{ [key: string]: RTCPeerConnection }>({});
 
   const fullScreenPluginInstance = fullScreenPlugin();
   const { EnterFullScreen } = fullScreenPluginInstance;
@@ -136,6 +145,34 @@ const App: React.FC = () => {
       }
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    socketRef.current = io(SERVER_URL);
+
+    socketRef.current.on("connect", () => {
+      console.log("Connected to server:", socketRef.current?.id);
+      setIsConnected(true);
+    });
+
+    socketRef.current.on("disconnect", () => {
+      console.log("Disconnected from server");
+      setIsConnected(false);
+    });
+
+    socketRef.current.on("offer", (payload: any) => {
+      console.log("Received offer from:", payload.from);
+      // handleReceiveOffer(payload);
+    });
+
+    socketRef.current.on("answer", (payload: any) => {
+      console.log("Received answer from:", payload.from);
+      // handleReceiveAnswer(payload);
+    });
+
+    return () => {
+      socketRef.current?.disconnect();
+    };
   }, []);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -252,6 +289,90 @@ const App: React.FC = () => {
     setScreenRecorderOpen(!screenRecorderOpen);
   };
 
+    const handleStartSharing = async () => {
+    console.log('Starting sharing...');
+    setIsSharing(true);
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = stream;
+    }
+    console.log('Emitting start-sharing event...');
+    socketRef.current?.emit('start-sharing', { userId: user.uid });
+  };
+
+  const handleStopSharing = () => {
+    console.log('Stopping sharing...');
+    setIsSharing(false);
+    if (localVideoRef.current && localVideoRef.current.srcObject) {
+      (localVideoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
+    }
+    socketRef.current?.emit('stop-sharing', { userId: user.uid });
+    Object.values(peerConnections.current).forEach(pc => pc.close());
+    peerConnections.current = {};
+  };
+
+  const createPeerConnection = (userId: string) => {
+    const pc = new RTCPeerConnection();
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        console.log('Sending ICE candidate to:', userId);
+        socketRef.current?.emit('ice-candidate', { to: userId, candidate: event.candidate });
+      }
+    };
+    pc.ontrack = (event) => {
+      console.log('Received remote stream from:', userId);
+      setRemoteStreams(prev => [...prev, event.streams[0]]);
+    };
+    return pc;
+  };
+
+  const createAndSendOffer = async (pc: RTCPeerConnection, userId: string) => {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    console.log('Sending offer to:', userId);
+    socketRef.current?.emit('offer', { to: userId, offer });
+  };
+
+  const handleReceiveOffer = async ({ from, offer }: { from: string, offer: RTCSessionDescriptionInit }) => {
+    console.log('Received offer from:', from);
+    const pc = createPeerConnection(from);
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    console.log('Sending answer to:', from);
+    socketRef.current?.emit('answer', { to: from, answer });
+    peerConnections.current[from] = pc;
+  };
+
+  const handleReceiveAnswer = async ({ from, answer }: { from: string, answer: RTCSessionDescriptionInit }) => {
+    console.log('Received answer from:', from);
+    const pc = peerConnections.current[from];
+    await pc.setRemoteDescription(new RTCSessionDescription(answer));
+  };
+
+  const handleNewICECandidateMsg = async ({ from, candidate }: { from: string, candidate: RTCIceCandidateInit }) => {
+    console.log('Received ICE candidate from:', from);
+    const pc = peerConnections.current[from];
+    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+  };
+
+  const handleUserDisconnected = (userId: string) => {
+    console.log('User disconnected:', userId);
+    if (peerConnections.current[userId]) {
+      peerConnections.current[userId].close();
+      delete peerConnections.current[userId];
+      setRemoteStreams(prev => prev.filter(stream => stream.id !== userId));
+    }
+  };
+
+  useEffect(() => {
+    remoteStreams.forEach((stream, index) => {
+      if (remoteVideoRefs.current[index]) {
+        remoteVideoRefs.current[index].srcObject = stream;
+      }
+    });
+  }, [remoteStreams]);
+
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
@@ -285,7 +406,8 @@ const App: React.FC = () => {
       )}
       <Main open={open} sx={{ position: 'relative', display: 'flex' }}>
         <DrawerHeader />
-        <Container sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexGrow: 1 }}>          {pdfFile && (
+        <Container sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexGrow: 1 }}>
+          {pdfFile && (
             <Box sx={{ flexGrow: 1, position: 'relative', overflow: 'hidden', display: 'flex' }}>
               <Box sx={{ flexGrow: 1, position: 'relative', overflow: 'auto' }}>
                 <EnterFullScreen>
@@ -316,6 +438,16 @@ const App: React.FC = () => {
               </Box>
             </Box>
           )}
+          <Box>
+            <Button onClick={isSharing ? handleStopSharing : handleStartSharing}>
+              {isSharing ? 'Stop Sharing' : 'Start Sharing'}
+              <p>Socket Status: {isConnected ? "Connected ✅" : "Disconnected ❌"}</p>
+            </Button>
+            <video ref={localVideoRef} autoPlay muted style={{ width: '100%' }} />
+            {remoteStreams.map((stream, index) => (
+              <video key={index} ref={el => { if (el) remoteVideoRefs.current[index] = el; }} autoPlay style={{ width: '100%' }} />
+            ))}
+          </Box>
         </Container>
       </Main>
       <Dialog

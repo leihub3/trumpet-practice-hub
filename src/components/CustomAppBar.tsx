@@ -5,7 +5,6 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
-import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import { Button } from '@mui/material';
 
 interface CustomAppBarProps extends MuiAppBarProps {
@@ -65,9 +64,6 @@ const CustomAppBar: React.FC<CustomAppBarProps> = ({ open, user, handleDrawerOpe
             <Typography variant="body1" component="span" sx={{ marginRight: 2 }}>
               Welcome, {user.displayName}
             </Typography>
-            <IconButton color="inherit" onClick={toggleCamera}>
-              <CameraAltIcon />
-            </IconButton>
             <Button color="inherit" onClick={handleLogout}>Logout</Button>
           </div>
         ) : (

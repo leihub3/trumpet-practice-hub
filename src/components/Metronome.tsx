@@ -9,25 +9,27 @@ const Metronome: React.FC = () => {
   const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
   const [currentBeat, setCurrentBeat] = useState(0);
   const [accentFirstBeat, setAccentFirstBeat] = useState(false);
-  const [subdivision, setSubdivision] = useState<'quarter' | 'eighth' | 'triplet'>('quarter');
+  const [subdivision, setSubdivision] = useState<'quarter' | 'eighth' | 'triplet' | 'sixteenth'>('quarter');
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const highClick = useRef(new Audio('hiclave.wav'));
   const lowClick = useRef(new Audio('lowclave.wav'));
-  const pingLow = useRef(new Audio('pinglow.wav'));
+  const pingLow = useRef(new Audio('Ping-Low.wav'));
 
   useEffect(() => {
     if (isPlaying) {
-      const subdivisionFactor = subdivision === 'eighth' ? 2 : subdivision === 'triplet' ? 3 : 1;
-      const adjustedBpm = bpm * subdivisionFactor;
-      const intervalTime = (60 / adjustedBpm) * 1000;
-      
+      const subdivisionFactor = 
+  subdivision === 'eighth' ? 2 : 
+  subdivision === 'triplet' ? 3 : 
+  subdivision === 'sixteenth' ? 4 : 1;
+const intervalTime = ((60 / bpm) * 1000) / subdivisionFactor;
+
       intervalRef.current = setInterval(() => {
         setCurrentBeat((prevBeat) => {
           let nextBeat = (prevBeat + 1) % (beatsPerMeasure * subdivisionFactor);
           let beatPosition = nextBeat % subdivisionFactor;
-          
+
           if (beatPosition === 0) {
             if (nextBeat === 0 && accentFirstBeat) {
               highClick.current.play().catch(console.error);
@@ -37,7 +39,7 @@ const Metronome: React.FC = () => {
           } else {
             pingLow.current.play().catch(console.error);
           }
-          
+
           return nextBeat;
         });
       }, intervalTime);
@@ -66,6 +68,13 @@ const Metronome: React.FC = () => {
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
     setCurrentBeat(0);
+  };
+
+  const subdivisionSymbols: Record<string, string> = {
+    quarter: "♪", // Unicode quarter note
+    eighth: "♫", // Unicode eighth note
+    triplet: "🎶", // Alternative triplet symbol
+    sixteenth: "𝅘𝅥𝅯" // Unicode sixteenth note
   };
 
   return (
@@ -98,15 +107,16 @@ const Metronome: React.FC = () => {
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 2 }}>
-        {['quarter', 'eighth', 'triplet'].map((type) => (
-          <Button 
-            key={type} 
-            variant={subdivision === type ? 'contained' : 'outlined'}
-            onClick={() => setSubdivision(type as 'quarter' | 'eighth' | 'triplet')}
-          >
-            {type.charAt(0).toUpperCase() + type.slice(1)}
-          </Button>
-        ))}
+      {/* // UI buttons */}
+      {['quarter', 'eighth', 'triplet', 'sixteenth'].map((type) => (
+        <Button 
+          key={type} 
+          variant={subdivision === type ? 'contained' : 'outlined'}
+          onClick={() => setSubdivision(type as 'quarter' | 'eighth' | 'triplet' | 'sixteenth')}
+        >
+          {subdivisionSymbols[type]}
+        </Button>
+      ))}
       </Box>
 
       <Button variant="contained" color="primary" onClick={togglePlay} sx={{ mt: 2 }}>
