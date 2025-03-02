@@ -1,74 +1,40 @@
-import express from "express";
-import http from "http";
-import { Server, Socket } from "socket.io";
+const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
+const cors = require("cors");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
+
+app.use(cors({ origin: "http://localhost:3000", methods: ["GET", "POST"] })); // Allow frontend requests
+
+const io = socketIo(server, {
   cors: {
-    origin: "*",
-  },
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"]
+  }
 });
 
-// Store connected users (userId → socketId)
-const users = new Map();
-
 io.on("connection", (socket) => {
-  console.log("New client connected:", socket.id);
+  console.log("A user connected:", socket.id);
 
-  socket.on("register", (userId) => {
-    users.set(userId, socket.id);
-    console.log(`User ${userId} registered with socket ID: ${socket.id}`);
+  socket.on("offer", (offer) => {
+    socket.broadcast.emit("offer", offer);
   });
 
-  socket.on("offer", (payload) => {
-    const receiverSocketId = users.get(payload.to);
-    if (receiverSocketId) {
-      console.log("Sending offer from:", payload.from, "to:", payload.to);
-      io.to(receiverSocketId).emit("offer", payload);
-    } else {
-      console.log("User not found:", payload.to);
-    }
+  socket.on("answer", (answer) => {
+    socket.broadcast.emit("answer", answer);
   });
 
-  socket.on("answer", (payload) => {
-    const receiverSocketId = users.get(payload.to);
-    if (receiverSocketId) {
-      console.log("Sending answer from:", payload.from, "to:", payload.to);
-      io.to(receiverSocketId).emit("answer", payload);
-    } else {
-      console.log("User not found:", payload.to);
-    }
-  });
-
-  socket.on("ice-candidate", (payload) => {
-    const receiverSocketId = users.get(payload.to);
-    if (receiverSocketId) {
-      console.log("Sending ICE candidate from:", payload.from, "to:", payload.to);
-      io.to(receiverSocketId).emit("ice-candidate", payload);
-    } else {
-      console.log("User not found:", payload.to);
-    }
-  });
-
-  socket.on("start-sharing", ({ userId }) => {
-    console.log("User started sharing:", userId);
-    socket.broadcast.emit("new-user", userId);
-  });
-
-  socket.on("stop-sharing", ({ userId }) => {
-    console.log("User stopped sharing:", userId);
-    socket.broadcast.emit("user-disconnected", userId);
+  socket.on("ice-candidate", (candidate) => {
+    socket.broadcast.emit("ice-candidate", candidate);
   });
 
   socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
-    users.forEach((socketId, userId) => {
-      if (socketId === socket.id) {
-        users.delete(userId);
-      }
-    });
+    console.log("User disconnected:", socket.id);
   });
 });
 
-server.listen(5000, () => console.log("Server is running on port 5000"));
+server.listen(5001, () => {
+  console.log("Signaling server running on port 5001");
+});

@@ -36,6 +36,8 @@ interface CustomDrawerProps {
   toggleMetronome: () => void;
   screenRecorderOpen: boolean;
   toggleScreenRecorder: () => void;
+  musicDroneOpen: boolean;
+  toggleMusicDrone: () => void;
   videoList: { id: string, url: string }[];
   user: User;
   fetchVideos: () => void;
@@ -65,6 +67,8 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
   toggleMetronome,
   screenRecorderOpen,
   toggleScreenRecorder,
+  musicDroneOpen,
+  toggleMusicDrone,
   videoList,
   user,
   fetchVideos,
@@ -155,7 +159,11 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
           label="Screen Recorder"
         />
         {screenRecorderOpen && <ScreenRecorder userId={user.uid} fetchVideos={fetchVideos} />}
-        <HinduMusicDrone />
+        <FormControlLabel
+          control={<Switch checked={musicDroneOpen} onChange={toggleMusicDrone} />}
+          label="Hindu Music Drone" // 🎶 Hindu Music Drone
+        />
+        {musicDroneOpen && <HinduMusicDrone />}
       </Box>
       <Divider />
       <Box sx={{ p: 2 }}>
