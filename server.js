@@ -35,6 +35,10 @@ io.on("connection", (socket) => {
   });
 });
 
+app.get("/", (req, res) => {
+  res.send("Server is running");
+});
+
 server.listen(5001, () => {
   console.log("Signaling server running on port 5001");
 });
