@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import io from "socket.io-client";
+import { Box, Button, Typography } from '@mui/material';
 
 const socket = io("http://localhost:5001");
 
@@ -20,7 +21,7 @@ const LiveStream = () => {
 
       peerRef.current = new RTCPeerConnection({
         iceServers: [
-          { urls: "stun:stun.l.google.com:19302" }, // ✅ STUN server
+          { urls: "stun:stun.l.google.com:19302" },
         ],
       });
 
@@ -37,7 +38,7 @@ const LiveStream = () => {
       };
 
       const offer = await peerRef.current.createOffer();
-      await peerRef.current.setLocalDescription(offer); // ✅ Set before sending
+      await peerRef.current.setLocalDescription(offer);
       socket.emit("offer", offer);
 
       setIsStreaming(true);
@@ -46,12 +47,28 @@ const LiveStream = () => {
     }
   };
 
+  const handleSetRemoteDescriptionError = (error: any) => {
+    console.error('Error setting remote description:', error);
+  };
+
+  const setRemoteDescription = async (description: RTCSessionDescriptionInit) => {
+    try {
+      if (peerRef.current?.signalingState === 'stable') {
+        console.warn('Skipping setRemoteDescription because signaling state is stable.');
+        return;
+      }
+      await peerRef.current?.setRemoteDescription(description);
+    } catch (error) {
+      handleSetRemoteDescriptionError(error);
+    }
+  };
+
   useEffect(() => {
     socket.on("answer", async (answer) => {
       try {
         if (!peerRef.current) return;
 
-        await peerRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+        await setRemoteDescription(new RTCSessionDescription(answer));
         console.log("✅ Remote description set successfully!");
       } catch (error) {
         console.error("❌ Error setting remote description:", error);
@@ -70,6 +87,7 @@ const LiveStream = () => {
     return () => {
       socket.off("answer");
       socket.off("ice-candidate");
+      stopStreaming();
     };
   }, []);
 
@@ -85,14 +103,24 @@ const LiveStream = () => {
   };
 
   return (
-    <div>
-      <h2>Live Stream</h2>
-      <video ref={videoRef} autoPlay playsInline></video>
-      <button onClick={startStreaming} disabled={isStreaming}>
-        {isStreaming ? "Streaming..." : "Start Streaming"}
-      </button>
-      {isStreaming && <button onClick={stopStreaming}>Stop Streaming</button>}
-    </div>
+    <Box sx={{ p: 2, textAlign: 'center' }}>
+      <Typography variant="h6">Live Stream</Typography>
+      {isStreaming && (
+        <Box sx={{ mt: 2 }}>
+          <video ref={videoRef} autoPlay playsInline style={{ width: '100%' }}></video>
+        </Box>
+      )}
+      <Box sx={{ mt: 2 }}>
+        <Button variant="contained" color="primary" onClick={startStreaming} disabled={isStreaming}>
+          {isStreaming ? "Streaming..." : "Start Streaming"}
+        </Button>
+        {isStreaming && (
+          <Button variant="contained" color="secondary" onClick={stopStreaming} sx={{ ml: 2 }}>
+            Stop Streaming
+          </Button>
+        )}
+      </Box>
+    </Box>
   );
 };
 

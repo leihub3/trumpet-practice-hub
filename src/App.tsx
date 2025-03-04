@@ -20,6 +20,10 @@ import CustomDrawer from './components/CustomDrawer';
 import { cloudinaryConfig } from './cloudinaryConfig';
 import LiveStream from './components/LiveStream';
 import LiveViewer from './components/LiveViewer';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import HinduMusicDrone from "./components/HinduMusicDrone";
+import Feed from "./pages/Feed";
+import Home from './pages/Home';
 
 const drawerWidth = 400;
 
@@ -66,6 +70,7 @@ const App: React.FC = () => {
   const [metronomeOpen, setMetronomeOpen] = useState<boolean>(false);
   const [screenRecorderOpen, setScreenRecorderOpen] = useState<boolean>(false);
   const [musicDroneOpen, setMusicDroneOpen] = useState<boolean>(false);
+  const [liveStreamOpen, setLiveStreamOpen] = useState<boolean>(false);
 
   const fullScreenPluginInstance = fullScreenPlugin();
   const { EnterFullScreen } = fullScreenPluginInstance;
@@ -258,103 +263,86 @@ const App: React.FC = () => {
     setMusicDroneOpen(!musicDroneOpen);
   };
 
+  const toggleLiveStream = () => {
+    setLiveStreamOpen(!liveStreamOpen);
+  };
+
   return (
-    <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
-      <CustomAppBar
-        open={open}
-        user={user}
-        handleDrawerOpen={handleDrawerOpen}
-        handleLogin={handleLogin}
-        handleLogout={handleLogout}
-        toggleCamera={toggleCamera}
-      />
-      {user && (
-        <CustomDrawer
+    <Router>
+      <Box sx={{ display: 'flex' }}>
+        <CssBaseline />
+        <CustomAppBar
           open={open}
-          handleDrawerClose={handleDrawerClose}
-          pdfList={pdfList}
-          pdfFile={pdfFile}
-          handlePdfSelect={handlePdfSelect}
-          handleOpenDialog={handleOpenDialog}
-          handleFileChange={handleFileChange}
-          cameraOpen={cameraOpen}
-          toggleCamera={toggleCamera}
-          metronomeOpen={metronomeOpen}
-          toggleMetronome={toggleMetronome}
-          screenRecorderOpen={screenRecorderOpen}
-          toggleScreenRecorder={toggleScreenRecorder}
-          musicDroneOpen={musicDroneOpen}
-          toggleMusicDrone={toggleMusicDrone}
-          videoList={videoList}
           user={user}
-          fetchVideos={fetchVideos}
+          handleDrawerOpen={handleDrawerOpen}
+          handleLogin={handleLogin}
+          handleLogout={handleLogout}
+          toggleCamera={toggleCamera}
         />
-      )}
-      <Main open={open} sx={{ position: 'relative', display: 'flex' }}>
-        <DrawerHeader />
-        <Container sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexGrow: 1 }}>
-          <Box>
-          <h1>Live Streaming con Socket.io</h1>
-          <LiveStream />
-          <LiveViewer />
-          </Box>
-          {pdfFile && (
-            <Box sx={{ flexGrow: 1, position: 'relative', overflow: 'hidden', display: 'flex' }}>
-              <Box sx={{ flexGrow: 1, position: 'relative', overflow: 'auto' }}>
-                <EnterFullScreen>
-                  {(props) => (
-                    <IconButton
-                      color="inherit"
-                      aria-label="toggle full screen"
-                      onClick={props.onClick}
-                      sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}
-                    >
-                      <FullscreenIcon />
-                    </IconButton>
-                  )}
-                </EnterFullScreen>
-                {isFullScreen && (
-                  <IconButton
-                    color="inherit"
-                    aria-label="exit full screen"
-                    onClick={toggleFullScreen}
-                    sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}
-                  >
-                    <FullscreenExit />
-                  </IconButton>
-                )}
-                <Worker workerUrl={`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`}>
-                  <Viewer fileUrl={pdfFile} plugins={[fullScreenPluginInstance]} />
-                </Worker>
-              </Box>
-            </Box>
-          )}
-          
-        </Container>
-      </Main>
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you sure you want to delete this PDF?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleDeletePdf} color="primary" autoFocus>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        {user && (
+          <CustomDrawer
+            open={open}
+            handleDrawerClose={handleDrawerClose}
+            pdfList={pdfList}
+            pdfFile={pdfFile}
+            handlePdfSelect={handlePdfSelect}
+            handleOpenDialog={handleOpenDialog}
+            handleFileChange={handleFileChange}
+            cameraOpen={cameraOpen}
+            toggleCamera={toggleCamera}
+            metronomeOpen={metronomeOpen}
+            toggleMetronome={toggleMetronome}
+            screenRecorderOpen={screenRecorderOpen}
+            toggleScreenRecorder={toggleScreenRecorder}
+            musicDroneOpen={musicDroneOpen}
+            toggleMusicDrone={toggleMusicDrone}
+            videoList={videoList}
+            user={user}
+            fetchVideos={fetchVideos}
+            liveStreamOpen={liveStreamOpen}
+            toggleLiveStream={toggleLiveStream}
+          />
+        )}
+        <Main open={open} sx={{ position: 'relative', display: 'flex' }}>
+          <DrawerHeader />
+          <Container sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            overflow: 'hidden', 
+            flexGrow: 1,
+            paddingTop: theme.spacing(5),
+            paddingBottom: theme.spacing(3),
+            }}>
+            <Routes>
+              <Route path="/" element={<Home pdfFile={pdfFile} isFullScreen={isFullScreen} toggleFullScreen={toggleFullScreen} />} />
+              <Route path="/feed" element={<Feed />} />
+            </Routes>
+          </Container>
+        </Main>
+        <Dialog
+          open={openDialog}
+          onClose={handleCloseDialog}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to delete this PDF?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleDeletePdf} color="primary" autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </Router>
   );
 }
 

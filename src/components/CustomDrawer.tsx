@@ -21,6 +21,7 @@ import { User } from './types';
 import { supabase } from '../supabaseClient';
 import { cloudinaryConfig } from '../cloudinaryConfig';
 import HinduMusicDrone from './HinduMusicDrone';
+import LiveStream from './LiveStream';
 
 interface CustomDrawerProps {
   open: boolean;
@@ -41,6 +42,8 @@ interface CustomDrawerProps {
   videoList: { id: string, url: string }[];
   user: User;
   fetchVideos: () => void;
+  liveStreamOpen: boolean;
+  toggleLiveStream: () => void;
 }
 
 const drawerWidth = 400;
@@ -72,6 +75,8 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
   videoList,
   user,
   fetchVideos,
+  liveStreamOpen,
+  toggleLiveStream,
 }) => {
   const theme = useTheme();
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
@@ -164,6 +169,11 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
           label="Hindu Music Drone" // 🎶 Hindu Music Drone
         />
         {musicDroneOpen && <HinduMusicDrone />}
+        <FormControlLabel
+          control={<Switch checked={liveStreamOpen} onChange={toggleLiveStream} />}
+          label="Live Stream" // 📡 Live Stream
+        />
+      {liveStreamOpen && <LiveStream />}
       </Box>
       <Divider />
       <Box sx={{ p: 2 }}>
@@ -245,7 +255,7 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
             </ListItem>
           ))}
         </List>
-      </Box>
+      </Box>      
       <Dialog
         open={openConfirmDialog}
         onClose={handleCloseConfirmDialog}

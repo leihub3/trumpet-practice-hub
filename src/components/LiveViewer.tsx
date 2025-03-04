@@ -1,11 +1,16 @@
 import React, { useRef, useEffect } from "react";
 import io from "socket.io-client";
+import { Box, Typography } from '@mui/material';
 
 const socket = io("http://localhost:5001");
 
 const LiveViewer = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const peerRef = useRef<RTCPeerConnection | null>(null);
+
+  const handleVideoPlayError = (error: any) => {
+    console.error('Video play error:', error);
+  };
 
   useEffect(() => {
     peerRef.current = new RTCPeerConnection({
@@ -60,19 +65,31 @@ const LiveViewer = () => {
       }
     });
 
+    if (videoRef.current) {
+      videoRef.current.addEventListener('error', handleVideoPlayError);
+    }
+
     return () => {
       peerRef.current?.close();
       peerRef.current = null;
       socket.off("offer");
       socket.off("ice-candidate");
+      if (videoRef.current) {
+        videoRef.current.removeEventListener('error', handleVideoPlayError);
+      }
     };
   }, []);
 
   return (
-    <div>
-      <h2>Live Viewer</h2>
-      <video ref={videoRef} autoPlay playsInline></video>
-    </div>
+    <Box sx={{ p: 2, textAlign: 'center' }}>
+      <Typography variant="h6">Live Viewer</Typography>
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        style={{ width: '100%' }}
+      ></video>
+    </Box>
   );
 };
 

@@ -13,10 +13,12 @@ const ScreenRecorder: React.FC<ScreenRecorderProps> = ({ userId, fetchVideos }) 
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoName, setVideoName] = useState<string>('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
   const startRecording = async () => {
+    setError(null);
     try {
       // Capture screen (including system audio)
       const screenStream = await navigator.mediaDevices.getDisplayMedia({
@@ -73,8 +75,15 @@ const ScreenRecorder: React.FC<ScreenRecorderProps> = ({ userId, fetchVideos }) 
   
       mediaRecorderRef.current.start();
       setRecording(true);
-    } catch (error) {
-      console.error('Error starting screen recording:', error);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'NotFoundError') {
+        setError('Requested device not found. Please ensure your screen or camera is connected and accessible.');
+      } else if (err instanceof Error) {
+        setError('Error starting screen recording: ' + err.message);
+      } else {
+        setError('Error starting screen recording.');
+      }
+      console.error('Error starting screen recording:', err);
     }
   };
   
@@ -135,6 +144,7 @@ const ScreenRecorder: React.FC<ScreenRecorderProps> = ({ userId, fetchVideos }) 
   return (
     <Box sx={{ p: 2, textAlign: 'center' }}>
       <Typography variant="h6">Screen Recorder</Typography>
+      {error && <Typography color="error">{error}</Typography>}
       <Button
         variant="contained"
         color={recording ? 'secondary' : 'primary'}

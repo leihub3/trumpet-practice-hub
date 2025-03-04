@@ -6,10 +6,11 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import { Button } from '@mui/material';
+import { NavLink } from 'react-router-dom';
 
 interface CustomAppBarProps extends MuiAppBarProps {
   open?: boolean;
-  user?: any;
+  user?: { displayName: string } | null;
   handleDrawerOpen: () => void;
   handleLogin: () => void;
   handleLogout: () => void;
@@ -35,15 +36,32 @@ const AppBar = styled(MuiAppBar, {
   }),
 }));
 
-const CustomAppBar: React.FC<CustomAppBarProps> = ({ open, user, handleDrawerOpen, handleLogin, handleLogout, toggleCamera }) => {
+// Styled component for the NavLink
+const StyledNavLink = styled(NavLink)(({ theme }) => ({
+  textDecoration: "none",
+  "&.active": {
+    color: "theme.palette.primary.main",
+    fontWeight: "bold",
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+  },
+}));
+
+const CustomAppBar: React.FC<CustomAppBarProps> = ({
+  open,
+  user,
+  handleDrawerOpen,
+  handleLogin,
+  handleLogout,
+  toggleCamera,
+}) => {
   return (
-    <AppBar 
-      position="fixed" 
-      open={open} 
-      user={user} 
-      handleDrawerOpen={handleDrawerOpen} 
-      handleLogin={handleLogin} 
-      handleLogout={handleLogout} 
+    <AppBar
+      position="fixed"
+      open={open}
+      user={user}
+      handleDrawerOpen={handleDrawerOpen}
+      handleLogin={handleLogin}
+      handleLogout={handleLogout}
       toggleCamera={toggleCamera}
     >
       <Toolbar>
@@ -59,6 +77,12 @@ const CustomAppBar: React.FC<CustomAppBarProps> = ({ open, user, handleDrawerOpe
         <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, textAlign: 'left' }}>
           My Practice Hub
         </Typography>
+        <Button color="inherit" component={StyledNavLink} to="/">
+          Home
+        </Button>
+        <Button color="inherit" component={StyledNavLink} to="/feed">
+          Feed
+        </Button>
         {user ? (
           <div>
             <Typography variant="body1" component="span" sx={{ marginRight: 2 }}>
