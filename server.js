@@ -6,11 +6,11 @@ const cors = require("cors");
 const app = express();
 const server = http.createServer(app);
 
-app.use(cors({ origin: "http://localhost:3000", methods: ["GET", "POST"] })); // Allow frontend requests
+app.use(cors({ origin: "https://your-frontend-url.vercel.app", methods: ["GET", "POST"] })); // Allow frontend requests
 
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "https://your-frontend-url.vercel.app",
     methods: ["GET", "POST"]
   }
 });

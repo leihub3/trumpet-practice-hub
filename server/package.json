@@ -1,0 +1,15 @@
+{
+  "name": "trumpet-practice-hub-server",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.17.1",
+    "http": "^0.0.1-security",
+    "socket.io": "^4.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
