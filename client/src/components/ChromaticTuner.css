@@ -1,0 +1,39 @@
+.gauge {
+  width: 200px;
+  height: 100px;
+  position: relative;
+}
+
+.gauge__body {
+  width: 100%;
+  height: 100%;
+  background: conic-gradient(
+    #ff5f6d 0%,
+    #ffc371 50%,
+    #00ff00 100%
+  );
+  border-radius: 100% 100% 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.gauge__fill {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: center bottom;
+  transition: transform 0.5s ease-out;
+}
+
+.gauge__cover {
+  width: 75%;
+  height: 150%;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 25%;
+  left: 12.5%;
+}

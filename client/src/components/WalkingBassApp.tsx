@@ -194,23 +194,25 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
 
     bassLoop.current.start(0);
 
-    // Start the jazz piano comping part
-    if (!jazzComping.current) {
-        jazzComping.current = new Tone.Part((time) => {
-            const currentChord = chordList[chordIndex];
-            const [rootNote, chordType] = currentChord.match(/[A-G][#b]?|\w+/g) || [];
-            const chordObj = getChord(chordType || "maj7", rootNote || "C");
-            let chordNotes = chordObj.notes.length ? chordObj.notes : ["C", "E", "G", "B"];
-            const chordToPlay = chordNotes.map(note => `${note}4`);
-            console.log(`Playing piano chord: ${chordToPlay}`);
-            pianoSampler.current?.triggerAttackRelease(chordToPlay, "1m", time);
-        }, [
-            ["0:0", null], // Trigger at the start of each bar
-        ]);
-
-        jazzComping.current.loop = true;
-        jazzComping.current.loopEnd = "1m"; // Loop every measure
+    // Re-initialize the jazzComping part
+    if (jazzComping.current) {
+      jazzComping.current.dispose();
     }
+
+    jazzComping.current = new Tone.Part((time) => {
+      const currentChord = chordList[chordIndex];
+      const [rootNote, chordType] = currentChord.match(/[A-G][#b]?|\w+/g) || [];
+      const chordObj = getChord(chordType || "maj7", rootNote || "C");
+      let chordNotes = chordObj.notes.length ? chordObj.notes : ["C", "E", "G", "B"];
+      const chordToPlay = chordNotes.map(note => `${note}4`);
+      console.log(`Playing piano chord: ${chordToPlay}`);
+      pianoSampler.current?.triggerAttackRelease(chordToPlay, "1m", time);
+    }, [
+      ["0:0", null], // Trigger at the start of each bar
+    ]);
+
+    jazzComping.current.loop = true;
+    jazzComping.current.loopEnd = "1m"; // Loop every measure
 
     jazzComping.current.start(0);
     Tone.Transport.start();
@@ -234,6 +236,7 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
     bassLoop.current?.stop();
     bassLoop.current?.dispose();
     jazzComping.current?.stop();
+    jazzComping.current?.dispose(); // Dispose of the jazzComping part
     Tone.Transport.stop();
     setIsPlaying(false);
   };
@@ -277,8 +280,7 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
 
   return (
     <div style={{ padding: 20, textAlign: "center" }}>
-      <h2>🎵 Walking Bass Generator</h2>
-      <p>User ID: {userId}</p>
+      <h2>🎵 Walking Bass Generator</h2>      
       <TextField label="Enter Chords" fullWidth value={chords} onChange={(e) => setChords(e.target.value)} />
       {savedProgressions.length > 0 && (
         <FormControl fullWidth>

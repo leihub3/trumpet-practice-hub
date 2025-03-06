@@ -23,6 +23,7 @@ import { cloudinaryConfig } from '../cloudinaryConfig';
 import HinduMusicDrone from './HinduMusicDrone';
 import LiveStream from './LiveStream';
 import WalkingBassApp from './WalkingBassApp';
+import ChromaticTuner from './ChromaticTuner';
 
 interface CustomDrawerProps {
   open: boolean;
@@ -47,6 +48,8 @@ interface CustomDrawerProps {
   toggleLiveStream: () => void;
   walkingBassOpen: boolean;
   toggleWalkingBass: () => void;
+  tunerOpen: boolean;
+  toggleTuner: () => void;
 }
 
 const drawerWidth = 400;
@@ -82,6 +85,8 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
   toggleLiveStream,
   walkingBassOpen,
   toggleWalkingBass,
+  tunerOpen,
+  toggleTuner,
 }) => {
   const theme = useTheme();
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
@@ -184,6 +189,11 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
           label="Walking Bass"
         />
         {walkingBassOpen && <WalkingBassApp userId={user.uid} />}
+        <FormControlLabel
+          control={<Switch checked={tunerOpen} onChange={toggleTuner} />}
+          label="Chromatic Tuner"
+        />
+        {tunerOpen && <ChromaticTuner />}
       </Box>
       <Divider />
       <Box sx={{ p: 2 }}>

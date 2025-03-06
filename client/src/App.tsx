@@ -24,6 +24,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import HinduMusicDrone from "./components/HinduMusicDrone";
 import Feed from "./pages/Feed";
 import Home from './pages/Home';
+import ChromaticTuner from './components/ChromaticTuner';
 
 const drawerWidth = 400;
 
@@ -72,6 +73,7 @@ const App: React.FC = () => {
   const [musicDroneOpen, setMusicDroneOpen] = useState<boolean>(false);
   const [liveStreamOpen, setLiveStreamOpen] = useState<boolean>(false);
   const [walkingBassOpen, setWalkingBassOpen] = useState<boolean>(false);
+  const [tunerOpen, setTunerOpen] = useState<boolean>(false);
 
   const fullScreenPluginInstance = fullScreenPlugin();
   const { EnterFullScreen } = fullScreenPluginInstance;
@@ -272,6 +274,10 @@ const App: React.FC = () => {
     setWalkingBassOpen(!walkingBassOpen);
   };
 
+  const toggleTuner = () => {
+    setTunerOpen(!tunerOpen);
+  };
+
   return (
     <Router>
       <Box sx={{ display: 'flex' }}>
@@ -308,6 +314,8 @@ const App: React.FC = () => {
             toggleLiveStream={toggleLiveStream}
             walkingBassOpen={walkingBassOpen}
             toggleWalkingBass={toggleWalkingBass}
+            tunerOpen={tunerOpen}
+            toggleTuner={toggleTuner}
           />
         )}
         <Main open={open} sx={{ position: 'relative', display: 'flex' }}>
@@ -325,6 +333,7 @@ const App: React.FC = () => {
               <Route path="/" element={<Home pdfFile={pdfFile} isFullScreen={isFullScreen} toggleFullScreen={toggleFullScreen} />} />
               <Route path="/feed" element={<Feed />} />
             </Routes>
+            {tunerOpen && <ChromaticTuner />}
           </Container>
         </Main>
         <Dialog
