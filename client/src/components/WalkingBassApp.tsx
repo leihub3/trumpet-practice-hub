@@ -13,7 +13,7 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
   const [chords, setChords] = useState("Dmin7 | G7 | Cmaj7  | Cmaj7");
   const [isPlaying, setIsPlaying] = useState(false);
   const [tempo, setTempo] = useState(120);
-  const [rhythm, setRhythm] = useState("quarter");
+  const [rhythm, setRhythm] = useState<keyof typeof rhythmDurations>("quarter");
   const [isSamplerLoaded, setIsSamplerLoaded] = useState(false);
   const [bassVolume, setBassVolume] = useState(-12);
   const [drumVolume, setDrumVolume] = useState(-12);
@@ -249,14 +249,16 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
           chords,
           user_id: userId, // Replace with the actual user ID
         },
-      ]);
+      ]).select();
 
       if (error) {
         throw error;
       }
 
       console.log('Chord progression saved:', data);
-      setSavedProgressions([...savedProgressions, { id: data[0].id, name: progressionName, chords }]);
+      if (data) {
+        setSavedProgressions([...savedProgressions, { id: data[0].id, name: progressionName, chords }]);
+      }
     } catch (error) {
       console.error('Error saving chord progression:', error);
     }
@@ -288,7 +290,7 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
           <Select
             labelId="saved-progressions-label"
             value={selectedProgression}
-            onChange={handleProgressionSelect}
+            onChange={() => handleProgressionSelect}
           >
             {savedProgressions.map(prog => (
               <MenuItem key={prog.id} value={prog.id}>
@@ -315,7 +317,7 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
         </IconButton>
       </div>
       
-      <RadioGroup value={rhythm} onChange={(e) => setRhythm(e.target.value)} row>
+      <RadioGroup value={rhythm} onChange={(e) => setRhythm(e.target.value as keyof typeof rhythmDurations)} row>
         <FormControlLabel value="quarter" control={<Radio />} label="Quarter Notes" />
         <FormControlLabel value="eighth" control={<Radio />} label="Eighth Notes" />
       </RadioGroup>

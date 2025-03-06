@@ -164,7 +164,7 @@ const ChromaticTuner: React.FC = () => {
         nrOfLevels={50}
         percent={gaugeValue}
         textColor="#fff"
-        formatTextValue={(value) => {
+        formatTextValue={(_value) => {
           return `${cents.toFixed(1)}`;
         }}
         arcWidth={0.3}
@@ -173,7 +173,7 @@ const ChromaticTuner: React.FC = () => {
         arcsLength={arcLengths}
         needleColor="#fff" // Neutral color for needle
         needleBaseColor="#fff"
-        needleWidth={2} // Thin needle
+        //        needleWidth={2} // Thin needle
       />
       <p className="note-container" style={noteContainerStyle}>
         {note && note.length > 1 ? extractNoteAndOctave(note).note : note}
