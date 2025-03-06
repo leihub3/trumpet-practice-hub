@@ -2,6 +2,10 @@
   "name": "trumpet-practice-hub",
   "version": "1.0.0",
   "scripts": {
+    "start": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "test": "cd client && npm test",
+    "eject": "cd client && npm run eject",
     "vercel-build": "cd client && npm run build"
   },
   "devDependencies": {
