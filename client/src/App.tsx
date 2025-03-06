@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Worker, Viewer } from '@react-pdf-viewer/core';
-import { fullScreenPlugin } from '@react-pdf-viewer/full-screen';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 import '@react-pdf-viewer/full-screen/lib/styles/index.css';
@@ -12,14 +10,10 @@ import 'pdfjs-dist/build/pdf.worker';
 import { supabase } from './supabaseClient';
 import { auth, googleProvider } from './firebaseConfig';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Container, IconButton } from '@mui/material';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import { FullscreenExit } from '@mui/icons-material';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Container } from '@mui/material';
 import CustomAppBar from './components/CustomAppBar';
 import CustomDrawer from './components/CustomDrawer';
 import { cloudinaryConfig } from './cloudinaryConfig';
-import LiveStream from './components/LiveStream';
-import LiveViewer from './components/LiveViewer';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import HinduMusicDrone from "./components/HinduMusicDrone";
 import Feed from "./pages/Feed";
@@ -74,9 +68,6 @@ const App: React.FC = () => {
   const [liveStreamOpen, setLiveStreamOpen] = useState<boolean>(false);
   const [walkingBassOpen, setWalkingBassOpen] = useState<boolean>(false);
   const [tunerOpen, setTunerOpen] = useState<boolean>(false);
-
-  const fullScreenPluginInstance = fullScreenPlugin();
-  const { EnterFullScreen } = fullScreenPluginInstance;
 
   useEffect(() => {
     const fetchPdfs = async () => {
