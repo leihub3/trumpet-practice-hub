@@ -1,29 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { styled, useTheme } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import Drawer from '@mui/material/Drawer';
-import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import DeleteIcon from '@mui/icons-material/Delete';
-import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
-import { Typography, Input, Switch, FormControlLabel, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from '@mui/material';
-import CameraMirror from './CameraMirror';
-import Metronome from './Metronome';
-import ScreenRecorder from './ScreenRecorder';
-import { User } from './types';
-import { supabase } from '../supabaseClient';
-import { cloudinaryConfig } from '../cloudinaryConfig';
-import HinduMusicDrone from './HinduMusicDrone';
-import LiveStream from './LiveStream';
-import WalkingBassApp from './WalkingBassApp';
-import ChromaticTuner from './ChromaticTuner';
+import React, { useState, useEffect } from "react";
+import { styled, useTheme } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import Drawer from "@mui/material/Drawer";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import DeleteIcon from "@mui/icons-material/Delete";
+import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
+import { Typography, Input, Switch, FormControlLabel, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from "@mui/material";
+import CameraMirror from "./CameraMirror";
+import Metronome from "./Metronome";
+import ScreenRecorder from "./ScreenRecorder";
+import { User } from "./types";
+import supabase from "../supabaseClient";
+import HinduMusicDrone from "./HinduMusicDrone";
+import LiveStream from "./LiveStream";
+import WalkingBassApp from "./WalkingBassApp";
+import ChromaticTuner from "./ChromaticTuner";
 
 interface CustomDrawerProps {
   open: boolean;
@@ -54,12 +53,12 @@ interface CustomDrawerProps {
 
 const drawerWidth = 400;
 
-const DrawerHeader = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
+const DrawerHeader = styled("div")(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
   padding: theme.spacing(0, 1),
   ...theme.mixins.toolbar,
-  justifyContent: 'flex-end',
+  justifyContent: "flex-end",
 }));
 
 const CustomDrawer: React.FC<CustomDrawerProps> = ({
@@ -94,11 +93,11 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
 
   useEffect(() => {
     if (!cameraOpen) {
-      const videoElement = document.querySelector('video');
+      const videoElement = document.querySelector("video");
       if (videoElement && videoElement.srcObject) {
         const stream = videoElement.srcObject as MediaStream;
         const tracks = stream.getTracks();
-        tracks.forEach(track => track.stop());
+        tracks.forEach((track) => track.stop());
         videoElement.srcObject = null;
       }
     }
@@ -109,10 +108,10 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
 
     try {
       // Delete from Supabase database
-      const { error } = await supabase.from('videos').delete().eq('id', videoToDelete.id);
+      const { error } = await supabase.from("videos").delete().eq("id", videoToDelete.id);
 
       if (error) {
-        console.error('Error deleting video from Supabase:', error.message);
+        console.error("Error deleting video from Supabase:", error.message);
         return;
       }
 
@@ -121,7 +120,7 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
       setOpenConfirmDialog(false);
       setVideoToDelete(null);
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error("Unexpected error:", err);
     }
   };
 
@@ -140,9 +139,9 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
       sx={{
         width: drawerWidth,
         flexShrink: 0,
-        '& .MuiDrawer-paper': {
+        "& .MuiDrawer-paper": {
           width: drawerWidth,
-          boxSizing: 'border-box',
+          boxSizing: "border-box",
         },
       }}
       variant="persistent"
@@ -151,7 +150,7 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
     >
       <DrawerHeader>
         <IconButton onClick={handleDrawerClose}>
-          {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+          {theme.direction === "ltr" ? <ChevronLeftIcon /> : <ChevronRightIcon />}
         </IconButton>
       </DrawerHeader>
       <Divider />
@@ -183,8 +182,8 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
           control={<Switch checked={liveStreamOpen} onChange={toggleLiveStream} />}
           label="Live Stream" // 📡 Live Stream
         />
-      {liveStreamOpen && <LiveStream />}
-      <FormControlLabel
+        {liveStreamOpen && <LiveStream />}
+        <FormControlLabel
           control={<Switch checked={walkingBassOpen} onChange={toggleWalkingBass} />}
           label="Walking Bass"
         />
@@ -204,19 +203,19 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
           type="file"
           fullWidth
           onChange={handleFileChange}
-          inputProps={{ 'aria-label': 'Upload PDF', accept: 'application/pdf' }}
+          inputProps={{ "aria-label": "Upload PDF", accept: "application/pdf" }}
           sx={{
-            '&::file-selector-button': {
-              backgroundColor: 'green',
-              color: 'white',
-              padding: '10px 20px',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginRight: '10px',
+            "&::file-selector-button": {
+              backgroundColor: "green",
+              color: "white",
+              padding: "10px 20px",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              marginRight: "10px",
             },
-            '&::file-selector-button:hover': {
-              backgroundColor: 'darkgreen',
+            "&::file-selector-button:hover": {
+              backgroundColor: "darkgreen",
             },
           }}
         />
@@ -227,11 +226,11 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
           <ListItem
             key={pdf.id}
             sx={{
-              bgcolor: pdfFile === pdf.url ? '#daebfd' : 'grey.100',
+              bgcolor: pdfFile === pdf.url ? "#daebfd" : "grey.100",
               borderRadius: 2,
               mb: 1,
-              '&:hover': { bgcolor: '#daebfd' },
-              cursor: 'pointer'
+              "&:hover": { bgcolor: "#daebfd" },
+              cursor: "pointer",
             }}
             onClick={() => handlePdfSelect(pdf.url)}
           >
@@ -262,7 +261,12 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
               <ListItemIcon>
                 <VideoLibraryIcon color="primary" />
               </ListItemIcon>
-              <ListItemText primary={<video src={video.url} controls style={{ width: '100%' }} />} />
+              <ListItemText primary={(
+                <video src={video.url} controls style={{ width: "100%" }}>
+                  <track kind="captions" />
+                </video>
+)}
+              />
               <IconButton
                 edge="end"
                 onClick={(e) => {
@@ -275,14 +279,14 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
             </ListItem>
           ))}
         </List>
-      </Box>      
+      </Box>
       <Dialog
         open={openConfirmDialog}
         onClose={handleCloseConfirmDialog}
         aria-labelledby="confirm-delete-dialog-title"
         aria-describedby="confirm-delete-dialog-description"
       >
-        <DialogTitle id="confirm-delete-dialog-title">{"Confirm Delete"}</DialogTitle>
+        <DialogTitle id="confirm-delete-dialog-title">Confirm Delete</DialogTitle>
         <DialogContent>
           <DialogContentText id="confirm-delete-dialog-description">
             Are you sure you want to delete this video?

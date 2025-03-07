@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from "react";
-import GaugeChart from "react-gauge-chart";
-import { getNoteInfo } from "../utils/noteUtils";
-import { PitchDetector } from "pitchy";
+/* eslint-disabled */
+import React, { useState, useEffect } from 'react';
+import GaugeChart from 'react-gauge-chart';
+import { PitchDetector } from 'pitchy';
 import IconButton from '@mui/material/IconButton';
 import SettingsIcon from '@mui/icons-material/Settings';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
-import { Box } from "@mui/material";
+import { Box } from '@mui/material';
+import { getNoteInfo } from '../utils/noteUtils';
 
 const ChromaticTuner: React.FC = () => {
   const [note, setNote] = useState<string | null>(null);
@@ -28,61 +29,60 @@ const ChromaticTuner: React.FC = () => {
     setAnchorEl(null);
   };
 
+  const initAudio = async () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const source = audioCtx.createMediaStreamSource(stream);
+      const gainNode = audioCtx.createGain();
+      gainNode.gain.value = 2; // Increase gain (adjust as needed)
+      const lowPassFilter = audioCtx.createBiquadFilter();
+      lowPassFilter.type = 'lowpass';
+      lowPassFilter.frequency.value = 1000; // Adjust frequency as needed
+      const analyserNode = audioCtx.createAnalyser();
+      analyserNode.fftSize = 4096; // Increase fftSize for higher resolution
+      source.connect(gainNode);
+      gainNode.connect(lowPassFilter);
+      lowPassFilter.connect(analyserNode);
+      setAudioContext(audioCtx);
+      setAnalyser(analyserNode);
+      return () => {
+        stream.getTracks().forEach((track) => track.stop());
+        audioCtx.close();
+      };
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+    }
+    return undefined;
+  };
+
   useEffect(() => {
-    const initAudio = async () => {
-      try {
-        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const source = audioCtx.createMediaStreamSource(stream);
-        const gainNode = audioCtx.createGain();
-        gainNode.gain.value = 2; // Increase gain (adjust as needed)
-        const lowPassFilter = audioCtx.createBiquadFilter();
-        lowPassFilter.type = "lowpass";
-        lowPassFilter.frequency.value = 1000; // Adjust frequency as needed
-        const analyserNode = audioCtx.createAnalyser();
-        analyserNode.fftSize = 4096; // Increase fftSize for higher resolution
-        source.connect(gainNode);
-        gainNode.connect(lowPassFilter);
-        lowPassFilter.connect(analyserNode);
+    let cleanupFn: (() => void) | undefined;
 
-        setAudioContext(audioCtx);
-        setAnalyser(analyserNode);
-
-        return () => {
-          stream.getTracks().forEach(track => track.stop());
-          audioCtx.close();
-        };
-      } catch (error) {
-        console.error("Error accessing microphone:", error);
-      }
-    };
-
-    initAudio();
+    (async () => {
+      cleanupFn = await initAudio();
+    })();
 
     return () => {
-      if (audioContext) {
-        audioContext.close();
-      }
-      if (analyser) {
-        analyser.disconnect();
-      }
+      if (cleanupFn) cleanupFn();
+      if (audioContext) audioContext.close();
+      if (analyser) analyser.disconnect();
     };
   }, []);
 
   useEffect(() => {
     if (!analyser || !audioContext) return;
-
-    const detectPitch = () => {
+      const detectPitch = () => {
       const bufferLength = analyser.fftSize;
       const dataArray = new Float32Array(bufferLength);
       analyser.getFloatTimeDomainData(dataArray);
-
+  
       const detector = PitchDetector.forFloat32Array(bufferLength);
       const [pitch, clarity] = detector.findPitch(dataArray, audioContext.sampleRate);
-
-      if (clarity > 0.9) { // Adjust clarity threshold as needed
+  
+      if (clarity > 0.9) {
         setFrequencyHistory((prevHistory) => {
-          const newHistory = [...prevHistory, pitch].slice(-10); // Keep the last 10 frequencies for more smoothing
+          const newHistory = [...prevHistory, pitch].slice(-10);
           const smoothedFrequency = newHistory.reduce((a, b) => a + b, 0) / newHistory.length;
           setFrequency(smoothedFrequency);
           const { note, centsOff } = getNoteInfo(smoothedFrequency, useSharps, a4Frequency);
@@ -92,10 +92,12 @@ const ChromaticTuner: React.FC = () => {
         });
       }
     };
-
+  
     const interval = setInterval(detectPitch, 100);
-    return () => clearInterval(interval);
-  }, [analyser, audioContext, useSharps, a4Frequency]);
+  
+    // ✅ Directly returning the cleanup function (No arrow function wrapper)
+    return clearInterval.bind(null, interval);
+  }, [analyser, audioContext, useSharps, a4Frequency]);  
 
   const extractNoteAndOctave = (note: string) => {
     const match = note.match(/^([A-G]#?b?)(\d)$/);
@@ -109,78 +111,73 @@ const ChromaticTuner: React.FC = () => {
   const gaugeValue = (cents + 50) / 100;
 
   // Define arc colors based on pitch accuracy regions
-  const arcColors = [
-    "#ff3333", // -50 to -10 cents: Red
-    "#ff9933", // -10 to -5 cents: Orange
-    "#28a745", // -5 to +5 cents: Green
-    "#ff9933", // +5 to +10 cents: Orange
-    "#ff3333"  // +10 to +50 cents: Red
-  ];
+  const arcColors = ['#ff3333', '#ff9933', '#28a745', '#ff9933', '#ff3333'];
 
   // Define arc lengths for each region
   const arcLengths = [0.2, 0.2, 0.2, 0.2, 0.2];
 
   // Determine note container styles based on accuracy
   const noteContainerStyle = {
-    fontSize: "4rem",
-    fontWeight: "bold",
-    margin: "-20px 0",
-    color: Math.abs(cents) <= 5 ? "#000" : "#ccc",
-    backgroundColor: Math.abs(cents) <= 5 ? "#28a745" : "transparent",
-    padding: "5px",
-    borderRadius: "5px",
-    display: "flex",
-    justifyContent: "center",
+    fontSize: '4rem',
+    fontWeight: 'bold',
+    margin: '-20px 0',
+    color: Math.abs(cents) <= 5 ? '#000' : '#ccc',
+    backgroundColor: Math.abs(cents) <= 5 ? '#28a745' : 'transparent',
+    padding: '5px',
+    borderRadius: '5px',
+    display: 'flex',
+    justifyContent: 'center',
   };
 
-  return (
-    <div style={{ textAlign: "center", fontFamily: "Arial, sans-serif", backgroundColor: "#333", color: "#fff", padding: "20px", borderRadius: "10px" }}>
-      <Box sx={{justifyContent: "space-between", alignItems: "center", display: "flex"}}>
-        <Box sx={{fontSize: '1.5rem', fontWeight: 'bold'}}>Chromatic Tuner</Box>
-        <Box>
-        <IconButton onClick={handleMenuOpen} style={{ color: "#fff" }}>
-          <SettingsIcon />
-        </IconButton>
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-        >
-          <MenuItem>
-            <Switch
-              checked={useSharps}
-              onChange={() => setUseSharps(!useSharps)}
-            />
-            Use Sharps
-          </MenuItem>
-          <MenuItem>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <IconButton onClick={() => setA4Frequency(a4Frequency - 1)}>-</IconButton>
-              <span>{`A4: ${a4Frequency} Hz`}</span>
-              <IconButton onClick={() => setA4Frequency(a4Frequency + 1)}>+</IconButton>
-            </div>
-          </MenuItem>
-        </Menu>
-        </Box>      
+  // Format text value for gauge chart
+  const formatTextValue = () => `${cents.toFixed(1)}`;
 
+  return (
+    <div
+      style={{
+        textAlign: 'center',
+        fontFamily: 'Arial, sans-serif',
+        backgroundColor: '#333',
+        color: '#fff',
+        padding: '20px',
+        borderRadius: '10px',
+      }}
+    >
+      <Box sx={{ justifyContent: 'space-between', alignItems: 'center', display: 'flex' }}>
+        <Box sx={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Chromatic Tuner</Box>
+        <Box>
+          <IconButton onClick={handleMenuOpen} style={{ color: '#fff' }}>
+            <SettingsIcon />
+          </IconButton>
+          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+            <MenuItem>
+              <Switch checked={useSharps} onChange={() => setUseSharps(!useSharps)} />
+              Use Sharps
+            </MenuItem>
+            <MenuItem>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <IconButton onClick={() => setA4Frequency(a4Frequency - 1)}>-</IconButton>
+                <span>{`A4: ${a4Frequency} Hz`}</span>
+                <IconButton onClick={() => setA4Frequency(a4Frequency + 1)}>+</IconButton>
+              </div>
+            </MenuItem>
+          </Menu>
+        </Box>
       </Box>
-      
-      <p>{`${note ?? "--"}: ${frequency !== null ? Math.round(frequency) : "--"}Hz`}</p>
+
+      <p>{`${note ?? '--'}: ${frequency !== null ? Math.round(frequency) : '--'}Hz`}</p>
       <GaugeChart
         id="gauge-chart"
         nrOfLevels={50}
         percent={gaugeValue}
         textColor="#fff"
-        formatTextValue={() => {
-          return `${cents.toFixed(1)}`;
-        }}
+        formatTextValue={() => formatTextValue()}
         arcWidth={0.3}
         colors={arcColors}
         arcPadding={0.02}
         arcsLength={arcLengths}
         needleColor="#fff" // Neutral color for needle
         needleBaseColor="#fff"
-        //        needleWidth={2} // Thin needle
       />
       <p className="note-container" style={noteContainerStyle}>
         {note && note.length > 1 ? extractNoteAndOctave(note).note : note}

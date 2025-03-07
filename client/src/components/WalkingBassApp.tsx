@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as Tone from "tone";
 import { Button, TextField, Slider, RadioGroup, FormControlLabel, Radio, MenuItem, Select, InputLabel, FormControl, IconButton, Typography, SelectChangeEvent } from "@mui/material";
-import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
+import { ArrowUpward, ArrowDownward } from "@mui/icons-material";
 import { getChord } from "@tonaljs/chord";
-import { supabase } from "../supabaseClient"; // Ensure you have a Supabase client setup
+import supabase from "../supabaseClient"; // Ensure you have a Supabase client setup
 
 interface WalkingBassAppProps {
   userId: string;
@@ -94,12 +94,12 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
   useEffect(() => {
     const fetchSavedProgressions = async () => {
       const { data, error } = await supabase
-        .from('chord_progression')
-        .select('*')
-        .eq('user_id', userId);
+        .from("chord_progression")
+        .select("*")
+        .eq("user_id", userId);
 
       if (error) {
-        console.error('Error fetching chord progressions:', error.message);
+        console.error("Error fetching chord progressions:", error.message);
       } else {
         setSavedProgressions(data || []);
       }
@@ -114,82 +114,81 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
     half: "2n",
   };
 
-  const startLoop = () => {
-    if (!bassSampler.current || !bassSampler.current.loaded || 
-        !drumSampler.current || !drumSampler.current.loaded ||
-        !pianoSampler.current || !pianoSampler.current.loaded) {
-      console.log("Samplers not loaded");
+  const startLoop = useCallback(() => {
+    if (!bassSampler.current || !bassSampler.current.loaded
+        || !drumSampler.current || !drumSampler.current.loaded
+        || !pianoSampler.current || !pianoSampler.current.loaded) {
       return;
     }
 
-    const chordList = chords.split("|").map(chord => chord.trim());
+    const chordList = chords.split("|").map((chord) => chord.trim());
     let chordIndex = 0;
     let noteIndex = 0;
     let beatCount = 0;
     let barCount = 0;
 
     if (bassLoop.current) {
-        bassLoop.current.stop();
-        bassLoop.current.dispose();
+      bassLoop.current.stop();
+      bassLoop.current.dispose();
     }
 
     bassLoop.current = new Tone.Loop((time) => {
-        const currentChord = chordList[chordIndex];
-        const [rootNote, chordType] = currentChord.match(/[A-G][#b]?|\w+/g) || [];
-        const chordObj = getChord(chordType || "maj7", rootNote || "C");
-        let chordNotes = chordObj.notes.length ? chordObj.notes : ["C", "E", "G", "B"];
+      const currentChord = chordList[chordIndex];
+      const [rootNote, chordType] = currentChord.match(/[A-G][#b]?|\w+/g) || [];
+      const chordObj = getChord(chordType || "maj7", rootNote || "C");
+      const chordNotes = chordObj.notes.length ? chordObj.notes : ["C", "E", "G", "B"];
 
-        let bassPattern;
-        if (barCount % 4 < 2) {
-            bassPattern = [
-                `${chordNotes[0]}2`, // 1
-                `${chordNotes[1]}2`, // 3
-                `${chordNotes[2]}2`, // 4
-                `${chordNotes[3]}3`  // 5
-            ];
-        } else {
-            bassPattern = [
-                `${chordNotes[0]}2`, // 1
-                `${chordNotes[3]}1`, // 7ma
-                `${chordNotes[2]}1`, // 5
-                `${chordNotes[1]}1`  // 3
-            ];
-        }
+      let bassPattern;
+      if (barCount % 4 < 2) {
+        bassPattern = [
+          `${chordNotes[0]}2`, // 1
+          `${chordNotes[1]}2`, // 3
+          `${chordNotes[2]}2`, // 4
+          `${chordNotes[3]}3`, // 5
+        ];
+      } else {
+        bassPattern = [
+          `${chordNotes[0]}2`, // 1
+          `${chordNotes[3]}1`, // 7ma
+          `${chordNotes[2]}1`, // 5
+          `${chordNotes[1]}1`, // 3
+        ];
+      }
 
-        let duration = rhythmDurations[rhythm];
-        const noteToPlay = bassPattern[noteIndex % bassPattern.length];
-        console.log(`Playing bass note: ${noteToPlay}`);
-        bassSampler.current?.triggerAttackRelease(noteToPlay, duration, time);
+      const duration = rhythmDurations[rhythm];
+      const noteToPlay = bassPattern[noteIndex % bassPattern.length];
+      // Playing bass note: ${noteToPlay}
+      bassSampler.current?.triggerAttackRelease(noteToPlay, duration, time);
 
-        // Drum pattern
-        if (beatCount % 4 === 0) {
-            drumSampler.current?.triggerAttackRelease("G1", "4n", time);
-            drumSampler.current?.triggerAttackRelease("E1", "8n", time);
-        }
-        if (beatCount % 4 === 1) {
-            drumSampler.current?.triggerAttackRelease("E1", "4n", time);
-            drumSampler.current?.triggerAttackRelease("E1", "8n", time + Tone.Time("4t").toSeconds());
-            drumSampler.current?.triggerAttackRelease("C1", "8n", time);
-        }
-        if (beatCount % 4 === 2) {
-            drumSampler.current?.triggerAttackRelease("G1", "8n", time);
-            drumSampler.current?.triggerAttackRelease("E1", "8n", time);
-        }
-        if (beatCount % 4 === 3) {
-            drumSampler.current?.triggerAttackRelease("E1", "4n", time);
-            drumSampler.current?.triggerAttackRelease("E1", "8n", time + Tone.Time("4t").toSeconds());
-            drumSampler.current?.triggerAttackRelease("C1", "8n", time);
-        }
+      // Drum pattern
+      if (beatCount % 4 === 0) {
+        drumSampler.current?.triggerAttackRelease("G1", "4n", time);
+        drumSampler.current?.triggerAttackRelease("E1", "8n", time);
+      }
+      if (beatCount % 4 === 1) {
+        drumSampler.current?.triggerAttackRelease("E1", "4n", time);
+        drumSampler.current?.triggerAttackRelease("E1", "8n", time + Tone.Time("4t").toSeconds());
+        drumSampler.current?.triggerAttackRelease("C1", "8n", time);
+      }
+      if (beatCount % 4 === 2) {
+        drumSampler.current?.triggerAttackRelease("G1", "8n", time);
+        drumSampler.current?.triggerAttackRelease("E1", "8n", time);
+      }
+      if (beatCount % 4 === 3) {
+        drumSampler.current?.triggerAttackRelease("E1", "4n", time);
+        drumSampler.current?.triggerAttackRelease("E1", "8n", time + Tone.Time("4t").toSeconds());
+        drumSampler.current?.triggerAttackRelease("C1", "8n", time);
+      }
 
-        noteIndex++;
-        beatCount++;
+      noteIndex++;
+      beatCount++;
 
-        if (beatCount >= (rhythm === "eighth" ? 8 : 4)) {
-            chordIndex = (chordIndex + 1) % chordList.length;
-            noteIndex = 0;
-            beatCount = 0;
-            barCount++;
-        }
+      if (beatCount >= (rhythm === "eighth" ? 8 : 4)) {
+        chordIndex = (chordIndex + 1) % chordList.length;
+        noteIndex = 0;
+        beatCount = 0;
+        barCount++;
+      }
     }, rhythm === "eighth" ? "8n" : "4n");
 
     bassLoop.current.start(0);
@@ -203,9 +202,9 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
       const currentChord = chordList[chordIndex];
       const [rootNote, chordType] = currentChord.match(/[A-G][#b]?|\w+/g) || [];
       const chordObj = getChord(chordType || "maj7", rootNote || "C");
-      let chordNotes = chordObj.notes.length ? chordObj.notes : ["C", "E", "G", "B"];
-      const chordToPlay = chordNotes.map(note => `${note}4`);
-      console.log(`Playing piano chord: ${chordToPlay}`);
+      const chordNotes = chordObj.notes.length ? chordObj.notes : ["C", "E", "G", "B"];
+      const chordToPlay = chordNotes.map((note) => `${note}4`);
+      // Playing piano chord: ${chordToPlay}
       pianoSampler.current?.triggerAttackRelease(chordToPlay, "1m", time);
     }, [
       ["0:0", null], // Trigger at the start of each bar
@@ -215,15 +214,15 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
     jazzComping.current.loopEnd = "1m"; // Loop every measure
 
     jazzComping.current.start(0);
-    Tone.Transport.start();
+    Tone.getTransport().start();
     setIsPlaying(true);
-  };
+  }, [chords, rhythm, bassSampler, drumSampler, pianoSampler, rhythmDurations]);
 
   useEffect(() => {
     if (isPlaying) {
       startLoop();
     }
-  }, [rhythm]);
+  }, [rhythm, chords, isPlaying, startLoop]);
 
   const startMusic = async () => {
     await Tone.start();
@@ -243,7 +242,7 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
 
   const saveChordProgression = async () => {
     try {
-      const { data, error } = await supabase.from('chord_progression').insert([
+      const { data, error } = await supabase.from("chord_progression").insert([
         {
           name: progressionName,
           chords,
@@ -255,18 +254,18 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
         throw error;
       }
 
-      console.log('Chord progression saved:', data);
+      console.log("Chord progression saved:", data);
       if (data) {
         setSavedProgressions([...savedProgressions, { id: data[0].id, name: progressionName, chords }]);
       }
     } catch (error) {
-      console.error('Error saving chord progression:', error);
+      console.error("Error saving chord progression:", error);
     }
   };
 
   const handleProgressionSelect = (event: SelectChangeEvent<string>) => {
     const selectedId = event.target.value as string;
-    const selectedProg = savedProgressions.find(prog => prog.id === selectedId);
+    const selectedProg = savedProgressions.find((prog) => prog.id === selectedId);
     if (selectedProg) {
       setChords(selectedProg.chords);
       setSelectedProgression(selectedId);
@@ -274,7 +273,7 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
   };
 
   const changeTempo = (increment: boolean) => {
-    setTempo(prevTempo => {
+    setTempo((prevTempo) => {
       const newTempo = increment ? prevTempo + 1 : prevTempo - 1;
       return Math.max(60, Math.min(180, newTempo));
     });
@@ -282,7 +281,7 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
 
   return (
     <div style={{ padding: 20, textAlign: "center" }}>
-      <h2>🎵 Walking Bass Generator</h2>      
+      <h2>🎵 Walking Bass Generator</h2>
       <TextField label="Enter Chords" fullWidth value={chords} onChange={(e) => setChords(e.target.value)} />
       {savedProgressions.length > 0 && (
         <FormControl fullWidth>
@@ -292,7 +291,7 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
             value={selectedProgression}
             onChange={(e) => handleProgressionSelect(e)}
           >
-            {savedProgressions.map(prog => (
+            {savedProgressions.map((prog) => (
               <MenuItem key={prog.id} value={prog.id}>
                 {prog.name}
               </MenuItem>
@@ -304,19 +303,21 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
         Save Chord Progression
       </Button>
       <TextField label="Progression Name" fullWidth value={progressionName} onChange={(e) => setProgressionName(e.target.value)} />
-      
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0' }}>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", margin: "20px 0" }}>
         <IconButton onClick={() => changeTempo(false)}>
           <ArrowDownward />
         </IconButton>
         <Typography variant="h4" sx={{ mx: 2 }}>
-          {tempo} BPM
+          {tempo}
+          {" "}
+          BPM
         </Typography>
         <IconButton onClick={() => changeTempo(true)}>
           <ArrowUpward />
         </IconButton>
       </div>
-      
+
       <RadioGroup value={rhythm} onChange={(e) => setRhythm(e.target.value as keyof typeof rhythmDurations)} row>
         <FormControlLabel value="quarter" control={<Radio />} label="Quarter Notes" />
         <FormControlLabel value="eighth" control={<Radio />} label="Eighth Notes" />
@@ -334,11 +335,11 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
         <h3>Piano Volume</h3>
         <Slider value={pianoVolume} onChange={(_, newVolume) => setPianoVolume(newVolume as number)} min={-60} max={0} step={1} valueLabelDisplay="auto" />
       </div>
-      
+
       <Button variant="contained" onClick={isPlaying ? stopMusic : startMusic} disabled={!isSamplerLoaded}>
         {isPlaying ? "Stop" : "Start"}
       </Button>
-      
+
     </div>
   );
 };

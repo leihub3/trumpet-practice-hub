@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import io from "socket.io-client";
-import { Box, Button, Typography } from '@mui/material';
-import { BACKEND_URL } from '../config';
+import { Box, Button, Typography } from "@mui/material";
+import BACKEND_URL from "../config";
 
 const socket = io(BACKEND_URL);
 
@@ -27,13 +27,11 @@ const LiveStream = () => {
       });
 
       mediaStream.getTracks().forEach((track) => {
-        console.log("🎥 Adding track:", track);
         peerRef.current?.addTrack(track, mediaStream);
       });
 
       peerRef.current.onicecandidate = (event) => {
         if (event.candidate) {
-          console.log("📡 Sending ICE candidate:", event.candidate);
           socket.emit("ice-candidate", event.candidate);
         }
       };
@@ -49,13 +47,13 @@ const LiveStream = () => {
   };
 
   const handleSetRemoteDescriptionError = (error: any) => {
-    console.error('Error setting remote description:', error);
+    console.error("Error setting remote description:", error);
   };
 
   const setRemoteDescription = async (description: RTCSessionDescriptionInit) => {
     try {
-      if (peerRef.current?.signalingState === 'stable') {
-        console.warn('Skipping setRemoteDescription because signaling state is stable.');
+      if (peerRef.current?.signalingState === "stable") {
+        console.warn("Skipping setRemoteDescription because signaling state is stable.");
         return;
       }
       await peerRef.current?.setRemoteDescription(description);
@@ -70,7 +68,6 @@ const LiveStream = () => {
         if (!peerRef.current) return;
 
         await setRemoteDescription(new RTCSessionDescription(answer));
-        console.log("✅ Remote description set successfully!");
       } catch (error) {
         console.error("❌ Error setting remote description:", error);
       }
@@ -78,7 +75,6 @@ const LiveStream = () => {
 
     socket.on("ice-candidate", async (candidate) => {
       try {
-        console.log("📡 Received ICE candidate:", candidate);
         await peerRef.current?.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (error) {
         console.error("❌ Error adding ICE candidate:", error);
@@ -103,9 +99,11 @@ const LiveStream = () => {
   };
 
   return (
-    <Box sx={{ p: 2, textAlign: 'center' }}>
+    <Box sx={{ p: 2, textAlign: "center" }}>
       <Typography variant="h6">Live Stream</Typography>
-      <video ref={videoRef} autoPlay playsInline style={{ width: '100%' }}></video>
+      <video ref={videoRef} autoPlay playsInline style={{ width: "100%" }}>
+        <track kind="captions" />
+      </video>
       <Box sx={{ mt: 2 }}>
         <Button variant="contained" color="primary" onClick={startStreaming} disabled={isStreaming}>
           {isStreaming ? "Streaming..." : "Start Streaming"}

@@ -25,7 +25,7 @@ const HinduMusicDrone: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>(defaultSets.set1);
   const [instrumentVolumes, setInstrumentVolumes] = useState<Record<string, number>>(
-    Object.fromEntries(Object.keys(instrumentFiles).map((instrument) => [instrument, -12]))
+    Object.fromEntries(Object.keys(instrumentFiles).map((instrument) => [instrument, -12])),
   );
 
   const players = useRef<Tone.Players | null>(null);
@@ -38,13 +38,13 @@ const HinduMusicDrone: React.FC = () => {
           Object.keys(instrumentFiles).map((instrument) => [
             instrument,
             instrumentFiles[instrument as keyof typeof instrumentFiles],
-          ])
+          ]),
         ),
         () => {
           console.log("All buffers loaded!");
           setPlayersLoaded(true);
           autoStartDefaultSet();
-        }
+        },
       ).toDestination();
     };
 
@@ -195,13 +195,13 @@ const HinduMusicDrone: React.FC = () => {
       {Object.keys(instrumentFiles).map((instrument) => (
         <div key={instrument} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
           <FormControlLabel
-            control={
+            control={(
               <Checkbox
                 checked={selectedInstruments.includes(instrument)}
                 onChange={() => handleInstrumentToggle(instrument)}
                 disabled={!playersLoaded}
               />
-            }
+            )}
             label={instrument}
           />
 

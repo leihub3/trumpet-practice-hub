@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from 'react';
-import { Box, IconButton, Paper } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import React, { useRef, useEffect } from "react";
+import { Box, IconButton, Paper } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 
 interface CameraMirrorProps {
   open: boolean;
@@ -11,38 +11,38 @@ const CameraMirror: React.FC<CameraMirrorProps> = ({ open, onClose }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
+    const videoElement = videoRef.current;
+
     const startCamera = async () => {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.onloadedmetadata = () => {
-              videoRef.current?.play().catch(error => console.error('Error playing video:', error));
+          if (videoElement) {
+            videoElement.srcObject = stream;
+            videoElement.onloadedmetadata = () => {
+              videoElement.play().catch((error) => console.error("Error playing video:", error));
             };
           }
         } catch (error) {
-          console.error('Error accessing the camera:', error);
+          console.error("Error accessing the camera:", error);
         }
       }
     };
 
     if (open) {
       startCamera();
-    } else {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        const tracks = stream.getTracks();
-        tracks.forEach(track => track.stop());
-        videoRef.current.srcObject = null;
-      }
+    } else if (videoElement && videoElement.srcObject) {
+      const stream = videoElement.srcObject as MediaStream;
+      const tracks = stream.getTracks();
+      tracks.forEach((track) => track.stop());
+      videoElement.srcObject = null;
     }
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
+      if (videoElement && videoElement.srcObject) {
+        const stream = videoElement.srcObject as MediaStream;
         const tracks = stream.getTracks();
-        tracks.forEach(track => track.stop());
+        tracks.forEach((track) => track.stop());
       }
     };
   }, [open]);
@@ -50,14 +50,23 @@ const CameraMirror: React.FC<CameraMirrorProps> = ({ open, onClose }) => {
   if (!open) return null;
 
   return (
-    <Paper elevation={3} sx={{ position: 'relative', width: 320, height: 240, backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <video ref={videoRef} style={{ transform: 'scaleX(-1)', width: '100%', height: 'auto' }} />
+    <Paper
+      elevation={3}
+      sx={{
+        position: "relative",
+        width: 320,
+        height: 240,
+        backgroundColor: "white",
+        borderRadius: "8px",
+        overflow: "hidden",
+      }}
+    >
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+        <video ref={videoRef} style={{ transform: "scaleX(-1)", width: "100%", height: "auto" }}>
+          <track kind="captions" />
+        </video>
       </Box>
-      <IconButton
-        onClick={onClose}
-        sx={{ position: 'absolute', top: 8, right: 8 }}
-      >
+      <IconButton onClick={onClose} sx={{ position: "absolute", top: 8, right: 8 }}>
         <CloseIcon />
       </IconButton>
     </Paper>

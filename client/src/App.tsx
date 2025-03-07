@@ -1,38 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { styled, useTheme } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import CssBaseline from '@mui/material/CssBaseline';
-import '@react-pdf-viewer/core/lib/styles/index.css';
-import '@react-pdf-viewer/default-layout/lib/styles/index.css';
-import '@react-pdf-viewer/full-screen/lib/styles/index.css';
-import { GlobalWorkerOptions } from 'pdfjs-dist';
-import 'pdfjs-dist/build/pdf.worker';
-import { supabase } from './supabaseClient';
-import { auth, googleProvider } from './firebaseConfig';
-import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Container } from '@mui/material';
-import CustomAppBar from './components/CustomAppBar';
-import CustomDrawer from './components/CustomDrawer';
-import { cloudinaryConfig } from './cloudinaryConfig';
+import React, { useState, useEffect, useCallback } from "react";
+import { styled, useTheme } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import CssBaseline from "@mui/material/CssBaseline";
+import "@react-pdf-viewer/core/lib/styles/index.css";
+import "@react-pdf-viewer/default-layout/lib/styles/index.css";
+import "@react-pdf-viewer/full-screen/lib/styles/index.css";
+import { GlobalWorkerOptions } from "pdfjs-dist";
+import "pdfjs-dist/build/pdf.worker";
+import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Container } from "@mui/material";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import supabase from "./supabaseClient";
+import { auth, googleProvider } from "./firebaseConfig";
+import CustomAppBar from "./components/CustomAppBar";
+import CustomDrawer from "./components/CustomDrawer";
+import cloudinaryConfig from "./cloudinaryConfig";
 import Feed from "./pages/Feed";
-import Home from './pages/Home';
-import ChromaticTuner from './components/ChromaticTuner';
+import Home from "./pages/Home";
+import ChromaticTuner from "./components/ChromaticTuner";
 
 const drawerWidth = 400;
 
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
+const Main = styled("main", { shouldForwardProp: (prop) => prop !== "open" })<{
   open?: boolean;
 }>(({ theme, open }) => ({
   flexGrow: 1,
   padding: theme.spacing(3),
-  transition: theme.transitions.create('margin', {
+  transition: theme.transitions.create("margin", {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
   marginLeft: `-${drawerWidth}px`,
   ...(open && {
-    transition: theme.transitions.create('margin', {
+    transition: theme.transitions.create("margin", {
       easing: theme.transitions.easing.easeOut,
       duration: theme.transitions.duration.enteringScreen,
     }),
@@ -40,15 +40,15 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
   }),
 }));
 
-const DrawerHeader = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
+const DrawerHeader = styled("div")(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
   padding: theme.spacing(0, 1),
   ...theme.mixins.toolbar,
-  justifyContent: 'flex-end',
+  justifyContent: "flex-end",
 }));
 
-const pdfjsVersion = '3.0.279'; // Specify the compatible version of pdfjs-dist
+const pdfjsVersion = "3.0.279"; // Specify the compatible version of pdfjs-dist
 GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
 const App: React.FC = () => {
   const theme = useTheme();
@@ -71,9 +71,9 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchPdfs = async () => {
       if (user) {
-        const { data, error } = await supabase.from('pdfs').select('*').eq('user_id', user.uid);
+        const { data, error } = await supabase.from("pdfs").select("*").eq("user_id", user.uid);
         if (error) {
-          console.error('Error fetching PDFs from Supabase:', error.message);
+          console.error("Error fetching PDFs from Supabase:", error.message);
         } else {
           setPdfList(data || []);
           setPdfFile(data && data.length > 0 ? data[0].url : null);
@@ -83,16 +83,16 @@ const App: React.FC = () => {
     fetchPdfs();
   }, [user]);
 
-  const fetchVideos = async () => {
+  const fetchVideos = useCallback(async () => {
     if (user) {
-      const { data, error } = await supabase.from('videos').select('*').eq('user_id', user.uid);
+      const { data, error } = await supabase.from("videos").select("*").eq("user_id", user.uid);
       if (error) {
-        console.error('Error fetching videos from Supabase:', error.message);
+        console.log("Error fetching videos from Supabase:", error.message);
       } else {
         setVideoList(data || []);
       }
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchVideos();
@@ -102,19 +102,19 @@ const App: React.FC = () => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        const { error } = await supabase.from('users').upsert({
+        const { error } = await supabase.from("users").upsert({
           id: currentUser.uid,
           email: currentUser.email,
-          name: currentUser.displayName
+          name: currentUser.displayName,
         });
         if (error) {
-          console.error('Error upserting user in Supabase:', error.message);
+          console.error("Error upserting user in Supabase:", error.message);
         }
 
         // Fetch PDFs and videos after user logs in
-        const { data: pdfData, error: pdfError } = await supabase.from('pdfs').select('*').eq('user_id', currentUser.uid).order('created_at', { ascending: false });
+        const { data: pdfData, error: pdfError } = await supabase.from("pdfs").select("*").eq("user_id", currentUser.uid).order("created_at", { ascending: false });
         if (pdfError) {
-          console.error('Error fetching PDFs from Supabase:', pdfError.message);
+          console.error("Error fetching PDFs from Supabase:", pdfError.message);
         } else {
           setPdfList(pdfData || []);
           if (pdfData && pdfData.length > 0) {
@@ -122,9 +122,9 @@ const App: React.FC = () => {
           }
         }
 
-        const { data: videoData, error: videoError } = await supabase.from('videos').select('*').eq('user_id', currentUser.uid).order('created_at', { ascending: false });
+        const { data: videoData, error: videoError } = await supabase.from("videos").select("*").eq("user_id", currentUser.uid).order("created_at", { ascending: false });
         if (videoError) {
-          console.error('Error fetching videos from Supabase:', videoError.message);
+          console.error("Error fetching videos from Supabase:", videoError.message);
         } else {
           setVideoList(videoData || []);
         }
@@ -143,39 +143,39 @@ const App: React.FC = () => {
     if (!file || !user) return;
 
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', cloudinaryConfig.uploadPreset);
+    formData.append("file", file);
+    formData.append("upload_preset", cloudinaryConfig.uploadPreset);
 
     try {
       const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/upload`, {
-        method: 'POST',
-        body: formData
+        method: "POST",
+        body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Error uploading to Cloudinary:', errorData);
+        console.error("Error uploading to Cloudinary:", errorData);
         return;
       }
 
       const data = await response.json();
       const url = data.secure_url;
 
-      const { data: supabaseData, error } = await supabase.from('pdfs').insert([{ url, user_id: user.uid, file_name: file.name }]).select();
+      const { data: supabaseData, error } = await supabase.from("pdfs").insert([{ url, user_id: user.uid, file_name: file.name }]).select();
 
       if (error) {
-        console.error('Error inserting into Supabase:', error.message);
+        console.error("Error inserting into Supabase:", error.message);
         return;
       }
 
       if (!supabaseData || supabaseData.length === 0) {
-        console.error('Supabase insert returned null or empty data.');
+        console.error("Supabase insert returned null or empty data.");
         return;
       }
 
       setPdfList([...pdfList, { id: supabaseData[0].id, url, file_name: file.name }]);
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error("Unexpected error:", err);
     }
   };
 
@@ -186,9 +186,9 @@ const App: React.FC = () => {
   const handleDeletePdf = async () => {
     if (!pdfToDelete) return;
     try {
-      const { error } = await supabase.from('pdfs').delete().eq('id', pdfToDelete);
+      const { error } = await supabase.from("pdfs").delete().eq("id", pdfToDelete);
       if (error) {
-        console.error('Error deleting PDF from Supabase:', error.message);
+        console.error("Error deleting PDF from Supabase:", error.message);
         return;
       }
       setPdfList(pdfList.filter((pdf) => pdf.id !== pdfToDelete));
@@ -198,7 +198,7 @@ const App: React.FC = () => {
       setOpenDialog(false);
       setPdfToDelete(null);
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error("Unexpected error:", err);
     }
   };
 
@@ -216,7 +216,7 @@ const App: React.FC = () => {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.error("Error signing in with Google:", error);
     }
   };
 
@@ -224,7 +224,7 @@ const App: React.FC = () => {
     try {
       await signOut(auth);
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
@@ -252,7 +252,7 @@ const App: React.FC = () => {
     setScreenRecorderOpen(!screenRecorderOpen);
   };
 
-  const toggleMusicDrone = () => { 
+  const toggleMusicDrone = () => {
     setMusicDroneOpen(!musicDroneOpen);
   };
 
@@ -270,7 +270,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: "flex" }}>
         <CssBaseline />
         <CustomAppBar
           open={open}
@@ -308,17 +308,18 @@ const App: React.FC = () => {
             toggleTuner={toggleTuner}
           />
         )}
-        <Main open={open} sx={{ position: 'relative', display: 'flex' }}>
+        <Main open={open} sx={{ position: "relative", display: "flex" }}>
           <DrawerHeader />
-          <Container sx={{ 
-            height: '100%', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            overflow: 'hidden', 
+          <Container sx={{
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
             flexGrow: 1,
             paddingTop: theme.spacing(5),
             paddingBottom: theme.spacing(3),
-            }}>
+          }}
+          >
             <Routes>
               <Route path="/" element={<Home pdfFile={pdfFile} isFullScreen={isFullScreen} toggleFullScreen={toggleFullScreen} />} />
               <Route path="/feed" element={<Feed />} />
@@ -332,7 +333,7 @@ const App: React.FC = () => {
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
-          <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
+          <DialogTitle id="alert-dialog-title">Confirm Delete</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
               Are you sure you want to delete this PDF?
@@ -350,6 +351,6 @@ const App: React.FC = () => {
       </Box>
     </Router>
   );
-}
+};
 
 export default App;
