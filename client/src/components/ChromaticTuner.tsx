@@ -72,17 +72,17 @@ const ChromaticTuner: React.FC = () => {
 
   useEffect(() => {
     if (!analyser || !audioContext) return;
-      const detectPitch = () => {
+    const detectPitch = () => {
       const bufferLength = analyser.fftSize;
       const dataArray = new Float32Array(bufferLength);
       analyser.getFloatTimeDomainData(dataArray);
-  
+
       const detector = PitchDetector.forFloat32Array(bufferLength);
       const [pitch, clarity] = detector.findPitch(dataArray, audioContext.sampleRate);
-  
+
       if (clarity > 0.9) {
         setFrequencyHistory((prevHistory) => {
-          const newHistory = [...prevHistory, pitch].slice(-10);
+          const newHistory = [...prevHistory, pitch].slice(-5); // Reduce history length for faster smoothing
           const smoothedFrequency = newHistory.reduce((a, b) => a + b, 0) / newHistory.length;
           setFrequency(smoothedFrequency);
           const { note, centsOff } = getNoteInfo(smoothedFrequency, useSharps, a4Frequency);
@@ -92,12 +92,11 @@ const ChromaticTuner: React.FC = () => {
         });
       }
     };
-  
+
     const interval = setInterval(detectPitch, 100);
-  
-    // ✅ Directly returning the cleanup function (No arrow function wrapper)
-    return clearInterval.bind(null, interval);
-  }, [analyser, audioContext, useSharps, a4Frequency]);  
+
+    return () => clearInterval(interval);
+  }, [analyser, audioContext, useSharps, a4Frequency]);
 
   const extractNoteAndOctave = (note: string) => {
     const match = note.match(/^([A-G]#?b?)(\d)$/);
@@ -108,15 +107,12 @@ const ChromaticTuner: React.FC = () => {
   };
 
   // Normalize gauge value (-50 cents to +50 cents mapped to 0% to 100%)
-  const gaugeValue = (cents + 50) / 100;
+  const gaugeValue = Math.max(0, Math.min(1, (cents + 50) / 100));
 
-  // Define arc colors based on pitch accuracy regions
   const arcColors = ['#ff3333', '#ff9933', '#28a745', '#ff9933', '#ff3333'];
 
-  // Define arc lengths for each region
   const arcLengths = [0.2, 0.2, 0.2, 0.2, 0.2];
 
-  // Determine note container styles based on accuracy
   const noteContainerStyle = {
     fontSize: '4rem',
     fontWeight: 'bold',
@@ -129,7 +125,6 @@ const ChromaticTuner: React.FC = () => {
     justifyContent: 'center',
   };
 
-  // Format text value for gauge chart
   const formatTextValue = () => `${cents.toFixed(1)}`;
 
   return (
@@ -176,7 +171,7 @@ const ChromaticTuner: React.FC = () => {
         colors={arcColors}
         arcPadding={0.02}
         arcsLength={arcLengths}
-        needleColor="#fff" // Neutral color for needle
+        needleColor="#fff"
         needleBaseColor="#fff"
       />
       <p className="note-container" style={noteContainerStyle}>
