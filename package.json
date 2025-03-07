@@ -1,16 +1,12 @@
 {
-  "name": "trumpet-practice-hub",
-  "version": "1.0.0",
-  "scripts": {
-    "start": "cd client && npm start",
-    "build": "cd client && npm run build",
-    "test": "cd client && npm test",
-    "eject": "cd client && npm run eject",
-    "vercel-build": "cd client && npm run build"
-  },
   "devDependencies": {
     "@babel/preset-env": "^7.26.9",
     "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "^7.26.0"
+  },
+  "dependencies": {
+    "aubiojs": "^0.1.0",
+    "path-browserify": "^1.0.1",
+    "browserify-fs": "^1.0.0"
   }
 }

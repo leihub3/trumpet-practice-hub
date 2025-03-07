@@ -15,7 +15,6 @@ import CustomAppBar from './components/CustomAppBar';
 import CustomDrawer from './components/CustomDrawer';
 import { cloudinaryConfig } from './cloudinaryConfig';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import HinduMusicDrone from "./components/HinduMusicDrone";
 import Feed from "./pages/Feed";
 import Home from './pages/Home';
 import ChromaticTuner from './components/ChromaticTuner';
@@ -97,13 +96,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     fetchVideos();
-  }, [user]);
+  }, [user, fetchVideos]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        const { data, error } = await supabase.from('users').upsert({
+        const { error } = await supabase.from('users').upsert({
           id: currentUser.uid,
           email: currentUser.email,
           name: currentUser.displayName

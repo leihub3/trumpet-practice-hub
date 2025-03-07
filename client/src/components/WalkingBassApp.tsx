@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as Tone from "tone";
-import { Button, TextField, Slider, RadioGroup, FormControlLabel, Radio, MenuItem, Select, InputLabel, FormControl, IconButton, Typography } from "@mui/material";
+import { Button, TextField, Slider, RadioGroup, FormControlLabel, Radio, MenuItem, Select, InputLabel, FormControl, IconButton, Typography, SelectChangeEvent } from "@mui/material";
 import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import { getChord } from "@tonaljs/chord";
 import { supabase } from "../supabaseClient"; // Ensure you have a Supabase client setup
@@ -264,7 +264,7 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
     }
   };
 
-  const handleProgressionSelect = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleProgressionSelect = (event: SelectChangeEvent<string>) => {
     const selectedId = event.target.value as string;
     const selectedProg = savedProgressions.find(prog => prog.id === selectedId);
     if (selectedProg) {
@@ -290,7 +290,7 @@ const WalkingBassApp: React.FC<WalkingBassAppProps> = ({ userId }) => {
           <Select
             labelId="saved-progressions-label"
             value={selectedProgression}
-            onChange={() => handleProgressionSelect}
+            onChange={(e) => handleProgressionSelect(e)}
           >
             {savedProgressions.map(prog => (
               <MenuItem key={prog.id} value={prog.id}>

@@ -7,6 +7,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
+import { Box } from "@mui/material";
 
 const ChromaticTuner: React.FC = () => {
   const [note, setNote] = useState<string | null>(null);
@@ -123,7 +124,7 @@ const ChromaticTuner: React.FC = () => {
   const noteContainerStyle = {
     fontSize: "4rem",
     fontWeight: "bold",
-    marginTop: "-20px",
+    margin: "-20px 0",
     color: Math.abs(cents) <= 5 ? "#000" : "#ccc",
     backgroundColor: Math.abs(cents) <= 5 ? "#28a745" : "transparent",
     padding: "5px",
@@ -134,37 +135,43 @@ const ChromaticTuner: React.FC = () => {
 
   return (
     <div style={{ textAlign: "center", fontFamily: "Arial, sans-serif", backgroundColor: "#333", color: "#fff", padding: "20px", borderRadius: "10px" }}>
-      <h2 style={{ marginBottom: "10px" }}>Chromatic Tuner</h2>
-      <IconButton onClick={handleMenuOpen} style={{ color: "#fff" }}>
-        <SettingsIcon />
-      </IconButton>
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem>
-          <Switch
-            checked={useSharps}
-            onChange={() => setUseSharps(!useSharps)}
-          />
-          Use Sharps
-        </MenuItem>
-        <MenuItem>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <IconButton onClick={() => setA4Frequency(a4Frequency - 1)}>-</IconButton>
-            <span>{`A4: ${a4Frequency} Hz`}</span>
-            <IconButton onClick={() => setA4Frequency(a4Frequency + 1)}>+</IconButton>
-          </div>
-        </MenuItem>
-      </Menu>
+      <Box sx={{justifyContent: "space-between", alignItems: "center", display: "flex"}}>
+        <Box sx={{fontSize: '1.5rem', fontWeight: 'bold'}}>Chromatic Tuner</Box>
+        <Box>
+        <IconButton onClick={handleMenuOpen} style={{ color: "#fff" }}>
+          <SettingsIcon />
+        </IconButton>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+        >
+          <MenuItem>
+            <Switch
+              checked={useSharps}
+              onChange={() => setUseSharps(!useSharps)}
+            />
+            Use Sharps
+          </MenuItem>
+          <MenuItem>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <IconButton onClick={() => setA4Frequency(a4Frequency - 1)}>-</IconButton>
+              <span>{`A4: ${a4Frequency} Hz`}</span>
+              <IconButton onClick={() => setA4Frequency(a4Frequency + 1)}>+</IconButton>
+            </div>
+          </MenuItem>
+        </Menu>
+        </Box>      
+
+      </Box>
+      
       <p>{`${note ?? "--"}: ${frequency !== null ? Math.round(frequency) : "--"}Hz`}</p>
       <GaugeChart
         id="gauge-chart"
         nrOfLevels={50}
         percent={gaugeValue}
         textColor="#fff"
-        formatTextValue={(_value) => {
+        formatTextValue={() => {
           return `${cents.toFixed(1)}`;
         }}
         arcWidth={0.3}
