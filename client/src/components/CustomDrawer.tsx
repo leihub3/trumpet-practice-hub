@@ -90,6 +90,8 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
   const theme = useTheme();
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [videoToDelete, setVideoToDelete] = useState<{ id: string, url: string } | null>(null);
+  const [compositeList, setCompositeList] = useState<{ id: string, composite_url: string }[]>([]);
+  const [compositeToDelete, setCompositeToDelete] = useState<{ id: string, composite_url: string } | null>(null);
 
   useEffect(() => {
     if (!cameraOpen) {
@@ -102,6 +104,23 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
       }
     }
   }, [cameraOpen]);
+
+  useEffect(() => {
+    const fetchComposites = async () => {
+      try {
+        const { data, error } = await supabase.from("composites").select("*");
+        if (error) {
+          console.error("Error fetching composites from Supabase:", error.message);
+          return;
+        }
+        setCompositeList(data);
+      } catch (err) {
+        console.error("Unexpected error:", err);
+      }
+    };
+
+    fetchComposites();
+  }, []);
 
   const handleDeleteVideo = async () => {
     if (!videoToDelete) return;
@@ -124,14 +143,41 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
     }
   };
 
+  const handleDeleteComposite = async () => {
+    if (!compositeToDelete) return;
+
+    try {
+      // Delete from Supabase database
+      const { error } = await supabase.from("composites").delete().eq("id", compositeToDelete.id);
+
+      if (error) {
+        console.error("Error deleting composite from Supabase:", error.message);
+        return;
+      }
+
+      // Refresh composite list after deletion
+      setCompositeList(compositeList.filter(composite => composite.id !== compositeToDelete.id));
+      setOpenConfirmDialog(false);
+      setCompositeToDelete(null);
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    }
+  };
+
   const confirmDeleteVideo = (id: string, url: string) => {
     setVideoToDelete({ id, url });
+    setOpenConfirmDialog(true);
+  };
+
+  const confirmDeleteComposite = (id: string, composite_url: string) => {
+    setCompositeToDelete({ id, composite_url });
     setOpenConfirmDialog(true);
   };
 
   const handleCloseConfirmDialog = () => {
     setOpenConfirmDialog(false);
     setVideoToDelete(null);
+    setCompositeToDelete(null);
   };
 
   return (
@@ -280,6 +326,36 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
           ))}
         </List>
       </Box>
+      <Divider />
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Composites
+        </Typography>
+        <List>
+          {compositeList.map((composite) => (
+            <ListItem key={composite.id} sx={{ mb: 1 }}>
+              <ListItemIcon>
+                <VideoLibraryIcon color="primary" />
+              </ListItemIcon>
+              <ListItemText primary={(
+                <video src={composite.composite_url} controls style={{ width: "100%" }}>
+                  <track kind="captions" />
+                </video>
+              )}
+              />
+              <IconButton
+                edge="end"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  confirmDeleteComposite(composite.id, composite.composite_url);
+                }}
+              >
+                <DeleteIcon color="error" />
+              </IconButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
       <Dialog
         open={openConfirmDialog}
         onClose={handleCloseConfirmDialog}
@@ -289,14 +365,14 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
         <DialogTitle id="confirm-delete-dialog-title">Confirm Delete</DialogTitle>
         <DialogContent>
           <DialogContentText id="confirm-delete-dialog-description">
-            Are you sure you want to delete this video?
+            Are you sure you want to delete this {videoToDelete ? "video" : "composite"}?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseConfirmDialog} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleDeleteVideo} color="primary" autoFocus>
+          <Button onClick={videoToDelete ? handleDeleteVideo : handleDeleteComposite} color="primary" autoFocus>
             Delete
           </Button>
         </DialogActions>

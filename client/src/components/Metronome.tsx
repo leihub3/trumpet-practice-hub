@@ -3,7 +3,11 @@ import { Box, Button, Slider, Typography, FormControlLabel, Checkbox, IconButton
 import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
 
-const Metronome: React.FC = () => {
+interface MetronomeProps {
+  start?: boolean;
+}
+
+const Metronome: React.FC<MetronomeProps> = ({ start = false }) => {
   const [bpm, setBpm] = useState(60);
   const [isPlaying, setIsPlaying] = useState(false);
   const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
@@ -63,6 +67,14 @@ const Metronome: React.FC = () => {
       }
     };
   }, [isPlaying, bpm, beatsPerMeasure, accentFirstBeat, subdivision]);
+
+  useEffect(() => {
+    if (start) {
+      setIsPlaying(true);
+    } else {
+      setIsPlaying(false);
+    }
+  }, [start]);
 
   const handleBpmChange = (_: Event, newValue: number | number[]) => {
     setBpm(newValue as number);

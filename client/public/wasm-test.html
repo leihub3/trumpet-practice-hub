@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebAssembly Threads Test</title>
+</head>
+<body>
+  <h1>WebAssembly Threads Test</h1>
+  <script>
+    async function testWasmThreads() {
+      if (typeof SharedArrayBuffer === 'undefined') {
+        document.body.innerHTML += '<p>SharedArrayBuffer is not supported in this browser.</p>';
+        return;
+      }
+
+      try {
+        const memory = new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true });
+        document.body.innerHTML += '<p>WebAssembly threads are supported in this browser.</p>';
+      } catch (e) {
+        document.body.innerHTML += '<p>WebAssembly threads are not supported in this browser.</p>';
+      }
+    }
+
+    testWasmThreads();
+  </script>
+</body>
+</html>

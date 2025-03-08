@@ -17,7 +17,7 @@ import CustomDrawer from "./components/CustomDrawer";
 import cloudinaryConfig from "./cloudinaryConfig";
 import Feed from "./pages/Feed";
 import Home from "./pages/Home";
-import ChromaticTuner from "./components/ChromaticTuner";
+import VoiceRecorder from './components/VoiceRecorder';
 
 const drawerWidth = 400;
 
@@ -323,8 +323,8 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<Home pdfFile={pdfFile} isFullScreen={isFullScreen} toggleFullScreen={toggleFullScreen} />} />
               <Route path="/feed" element={<Feed />} />
+              <Route path="/composite" element={<VoiceRecorder user={user} />} />
             </Routes>
-            {tunerOpen && <ChromaticTuner />}
           </Container>
         </Main>
         <Dialog

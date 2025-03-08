@@ -1,0 +1,24 @@
+.voice-recorder {
+  text-align: center;
+}
+
+.recordings-layout {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.recording {
+  flex: 1 1 30%;
+  margin: 10px;
+}
+
+.recording video {
+  width: 100%;
+  height: auto;
+}
+
+.video-preview {
+  width: 100%;
+  height: auto;
+  margin-top: 20px;
+}

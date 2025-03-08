@@ -82,6 +82,9 @@ const CustomAppBar: React.FC<CustomAppBarProps> = ({
       <Button color="inherit" component={StyledNavLink} to="/feed">
         Feed
       </Button>
+      <Button color="inherit" component={StyledNavLink} to="/composite">
+        Composite
+      </Button>
       {user ? (
         <div>
           <Typography variant="body1" component="span" sx={{ marginRight: 2 }}>

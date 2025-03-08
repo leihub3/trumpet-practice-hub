@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SharedArrayBuffer Test</title>
+</head>
+<body>
+  <h1>SharedArrayBuffer Test</h1>
+  <script>
+    if (typeof SharedArrayBuffer === 'undefined') {
+      document.body.innerHTML += '<p>SharedArrayBuffer is not supported in this browser.</p>';
+    } else {
+      document.body.innerHTML += '<p>SharedArrayBuffer is supported in this browser.</p>';
+    }
+  </script>
+</body>
+</html>
