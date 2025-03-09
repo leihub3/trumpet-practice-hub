@@ -40,6 +40,7 @@
     "react-dom": "^18.0.0",
     "react-draggable": "^4.4.6",
     "react-gauge-chart": "^0.5.1",
+    "react-media-recorder": "^1.7.1",
     "react-odometerjs": "^3.1.3",
     "react-router-dom": "^7.2.0",
     "react-scripts": "5.0.1",
@@ -48,6 +49,7 @@
     "tonal": "^6.4.0",
     "tone": "^15.0.4",
     "typescript": "^4.9.5",
+    "wavesurfer.js": "^7.9.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

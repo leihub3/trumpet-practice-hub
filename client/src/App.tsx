@@ -18,6 +18,7 @@ import cloudinaryConfig from "./cloudinaryConfig";
 import Feed from "./pages/Feed";
 import Home from "./pages/Home";
 import VoiceRecorder from './components/VoiceRecorder';
+import AudioRecorder from "./components/AudioRecorder";
 
 const drawerWidth = 400;
 
@@ -324,6 +325,7 @@ const App: React.FC = () => {
               <Route path="/" element={<Home pdfFile={pdfFile} isFullScreen={isFullScreen} toggleFullScreen={toggleFullScreen} />} />
               <Route path="/feed" element={<Feed />} />
               <Route path="/composite" element={<VoiceRecorder user={user} />} />
+              <Route path="/audio-recorder" element={<AudioRecorder user={user} />} />
             </Routes>
           </Container>
         </Main>

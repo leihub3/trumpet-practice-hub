@@ -11,35 +11,35 @@ interface VoiceRecorderProps {
 
 function VoiceRecorder(props: VoiceRecorderProps) {
     const { user } = props;
-  const [numVoices, setNumVoices] = useState(1);
-  const [recordings, setRecordings] = useState<string[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isPreviewing, setIsPreviewing] = useState(false);
-  const [metronomeStart, setMetronomeStart] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordedChunksRef = useRef<Blob[]>([]);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+    const [numVoices, setNumVoices] = useState(1);
+    const [recordings, setRecordings] = useState<string[]>([]);
+    const [isRecording, setIsRecording] = useState(false);
+    const [isPreviewing, setIsPreviewing] = useState(false);
+    const [metronomeStart, setMetronomeStart] = useState(false);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const recordedChunksRef = useRef<Blob[]>([]);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
 
-  const handleNumVoicesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setNumVoices(Number(event.target.value));
-  };
+    const handleNumVoicesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setNumVoices(Number(event.target.value));
+    };
 
-  const startPreview = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-      setIsPreviewing(true);
-      console.log('Camera preview started');
-    } catch (err) {
-      console.error('Error accessing camera:', err);
-    }
-  };
+    const startPreview = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            streamRef.current = stream;
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+            setIsPreviewing(true);
+            console.log('Camera preview started');
+        } catch (err) {
+            console.error('Error accessing camera:', err);
+        }
+    };
 
-  const stopPreview = () => {
+    const stopPreview = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;

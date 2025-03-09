@@ -85,6 +85,9 @@ const CustomAppBar: React.FC<CustomAppBarProps> = ({
       <Button color="inherit" component={StyledNavLink} to="/composite">
         Composite
       </Button>
+      <Button color="inherit" component={StyledNavLink} to="/audio-recorder">
+        Audio Recorder
+      </Button>
       {user ? (
         <div>
           <Typography variant="body1" component="span" sx={{ marginRight: 2 }}>

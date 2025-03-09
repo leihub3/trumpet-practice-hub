@@ -92,6 +92,7 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
   const [videoToDelete, setVideoToDelete] = useState<{ id: string, url: string } | null>(null);
   const [compositeList, setCompositeList] = useState<{ id: string, composite_url: string }[]>([]);
   const [compositeToDelete, setCompositeToDelete] = useState<{ id: string, composite_url: string } | null>(null);
+  const [mixdownList, setMixdownList] = useState<{ id: string, name: string, url: string }[]>([]);
 
   useEffect(() => {
     if (!cameraOpen) {
@@ -121,6 +122,23 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
 
     fetchComposites();
   }, []);
+
+  useEffect(() => {
+    const fetchMixdowns = async () => {
+      try {
+        const { data, error } = await supabase.from("audios").select("*").eq("user_id", user.uid);
+        if (error) {
+          console.error("Error fetching mixdowns from Supabase:", error.message);
+          return;
+        }
+        setMixdownList(data);
+      } catch (err) {
+        console.error("Unexpected error:", err);
+      }
+    };
+
+    fetchMixdowns();
+  }, [user.uid]);
 
   const handleDeleteVideo = async () => {
     if (!videoToDelete) return;
@@ -352,6 +370,27 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
               >
                 <DeleteIcon color="error" />
               </IconButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+      <Divider />
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Mixdowns
+        </Typography>
+        <List>
+          {mixdownList.map((mixdown) => (
+            <ListItem key={mixdown.id} sx={{ mb: 1 }}>
+              <ListItemIcon>
+                <VideoLibraryIcon color="primary" />
+              </ListItemIcon>
+              <ListItemText primary={(
+                <audio src={mixdown.url} controls style={{ width: "100%" }}>
+                  <track kind="captions" />
+                </audio>
+              )}
+              />
             </ListItem>
           ))}
         </List>
