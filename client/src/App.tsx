@@ -19,6 +19,7 @@ import Feed from "./pages/Feed";
 import Home from "./pages/Home";
 import VoiceRecorder from './components/VoiceRecorder';
 import AudioRecorder from "./components/AudioRecorder";
+import VideoCanvas from "./components/video-canvas/VideoCanvas";
 
 const drawerWidth = 400;
 
@@ -324,7 +325,13 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<Home pdfFile={pdfFile} isFullScreen={isFullScreen} toggleFullScreen={toggleFullScreen} />} />
               <Route path="/feed" element={<Feed />} />
-              <Route path="/composite" element={<VoiceRecorder user={user} />} />
+              <Route path="/composite" element={ 
+                <>
+                <VoiceRecorder user={user} />
+                <VideoCanvas />
+                </>
+              }
+                 />
               <Route path="/audio-recorder" element={<AudioRecorder user={user} />} />
             </Routes>
           </Container>

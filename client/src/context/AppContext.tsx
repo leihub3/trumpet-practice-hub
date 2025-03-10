@@ -12,6 +12,8 @@ interface AppContextProps {
   composites: Composite[];
   fetchComposites: (user: User) => void;
   loading: boolean;
+  videoUrls: string[];
+  setVideoUrls: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -23,6 +25,7 @@ interface AppProviderProps {
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [composites, setComposites] = useState<Composite[]>([]);
   const [loading, setLoading] = useState(false);
+  const [videoUrls, setVideoUrls] = useState<string[]>([]);
 
   const fetchComposites = useCallback(async (user: User) => {
     if (!user?.uid) {
@@ -50,7 +53,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, []);
 
   return (
-    <AppContext.Provider value={{ composites, fetchComposites, loading }}>
+    <AppContext.Provider value={{ 
+      composites, 
+      fetchComposites,
+      loading, 
+      videoUrls, 
+      setVideoUrls 
+      }}>
       {children}
     </AppContext.Provider>
   );

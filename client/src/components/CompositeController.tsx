@@ -149,6 +149,16 @@ const CompositeController: React.FC<CompositeControllerProps> = ({ recordings, u
     }
   };
 
+  const getGridTemplateColumns = (length: number) => {
+    if (length <= 3) return `repeat(${length}, 1fr)`;
+    return `repeat(3, 1fr)`;
+  };
+
+  const getGridTemplateRows = (length: number) => {
+    if (length <= 3) return `1fr`;
+    return `repeat(${Math.ceil(length / 3)}, 1fr)`;
+  };
+
   return (
     <div className="composite-controller">
       {loading || exporting ? (
@@ -168,18 +178,25 @@ const CompositeController: React.FC<CompositeControllerProps> = ({ recordings, u
             <p>SharedArrayBuffer is not supported in this browser. Please use a browser that supports SharedArrayBuffer.</p>
           ) : (
             <>
-              <div className="videos">
+              <div className="videos" style={{
+                 display: 'grid', 
+                 gridTemplateColumns: getGridTemplateColumns(recordings.length),
+                 gridTemplateRows: getGridTemplateRows(recordings.length),
+                 gap: '5px',
+                 width: '600px',
+                 height: '400px',
+                 }}>
                 {recordings.map((recording, index) => (
                   <video
                     key={index}
                     src={recording}
-                    controls
                     ref={el => {
                       if (el) {
                         videoRefs.current.set(index, el);
                       }
                     }}
                     className="composite-video"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   ></video>
                 ))}
               </div>
@@ -192,7 +209,6 @@ const CompositeController: React.FC<CompositeControllerProps> = ({ recordings, u
           )}
         </>
       )}
-      {!loaded && <button onClick={loadFFmpeg}>Load ffmpeg-core</button>}
       <p ref={messageRef}></p>
     </div>
   );

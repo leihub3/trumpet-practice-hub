@@ -1,6 +1,7 @@
 import React from "react";
 import { Typography, Box } from "@mui/material";
 import VoiceRecorder from "../components/VoiceRecorder";
+import VideoCanvas from "../components/video-canvas/VideoCanvas";
 
 const Composite: React.FC = () => (
   <Box>
@@ -10,6 +11,7 @@ const Composite: React.FC = () => (
     <Typography variant="body1">
       This is the Composite page.
     </Typography>
+    <VideoCanvas />
   </Box>
 );
 
