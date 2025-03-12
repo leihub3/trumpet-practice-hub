@@ -13,10 +13,15 @@
   margin-bottom: 20px;
 }
 
+.videos-column-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+
 .composite-video {
   width: 100%;
-  margin: 10px;
-  max-width: 300px;
 }
 
 .controls {

@@ -17,9 +17,9 @@ import CustomDrawer from "./components/CustomDrawer";
 import cloudinaryConfig from "./cloudinaryConfig";
 import Feed from "./pages/Feed";
 import Home from "./pages/Home";
-import VoiceRecorder from './components/VoiceRecorder';
+import Composite from './components/composite';
 import AudioRecorder from "./components/AudioRecorder";
-import VideoCanvas from "./components/video-canvas/VideoCanvas";
+import VideoCanvas from "./components/composite/VideoCanvas";
 
 const drawerWidth = 400;
 
@@ -326,10 +326,7 @@ const App: React.FC = () => {
               <Route path="/" element={<Home pdfFile={pdfFile} isFullScreen={isFullScreen} toggleFullScreen={toggleFullScreen} />} />
               <Route path="/feed" element={<Feed />} />
               <Route path="/composite" element={ 
-                <>
-                <VoiceRecorder user={user} />
-                <VideoCanvas />
-                </>
+                <Composite user={user} />
               }
                  />
               <Route path="/audio-recorder" element={<AudioRecorder user={user} />} />
