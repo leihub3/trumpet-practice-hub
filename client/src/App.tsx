@@ -323,7 +323,8 @@ const App: React.FC = () => {
           }}
           >
             <Routes>
-              <Route path="/" element={<Home pdfFile={pdfFile} isFullScreen={isFullScreen} toggleFullScreen={toggleFullScreen} />} />
+              <Route path="/" element={<Home fileUrl={pdfFile} />} />
+              {/*isFullScreen={isFullScreen} toggleFullScreen={toggleFullScreen} */}
               <Route path="/feed" element={<Feed />} />
               <Route path="/composite" element={ 
                 <Composite user={user} />
