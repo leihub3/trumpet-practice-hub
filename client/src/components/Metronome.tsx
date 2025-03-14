@@ -16,13 +16,19 @@ const Metronome: React.FC<MetronomeProps> = ({ start = false }) => {
   const [subdivision, setSubdivision] = useState<"quarter" | "eighth" | "triplet" | "sixteenth">("quarter");
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTimeRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   const highClick = useRef(new Audio("hiclave.wav"));
   const lowClick = useRef(new Audio("lowclave.wav"));
-  const pingLow = useRef(new Audio("Ping-Low.wav"));
+  const pingLow = useRef(new Audio("lowclave.wav"));
 
   useEffect(() => {
-    if (isPlaying) {
+    const tick = (time: number) => {
+      if (!lastTimeRef.current) {
+        lastTimeRef.current = time;
+      }
+      const elapsed = time - lastTimeRef.current;
       let subdivisionFactor: number;
       switch (subdivision) {
         case "eighth":
@@ -39,32 +45,46 @@ const Metronome: React.FC<MetronomeProps> = ({ start = false }) => {
       }
       const intervalTime = ((60 / bpm) * 1000) / subdivisionFactor;
 
-      intervalRef.current = setInterval(() => {
+      if (elapsed >= intervalTime) {
         setCurrentBeat((prevBeat) => {
           const nextBeat = (prevBeat + 1) % (beatsPerMeasure * subdivisionFactor);
           const beatPosition = nextBeat % subdivisionFactor;
 
           if (beatPosition === 0) {
             if (nextBeat === 0 && accentFirstBeat) {
+              highClick.current.currentTime = 0;
               highClick.current.play().catch(console.error);
             } else {
+              lowClick.current.currentTime = 0;
               lowClick.current.play().catch(console.error);
             }
           } else {
+            pingLow.current.currentTime = 0;
             pingLow.current.play().catch(console.error);
           }
 
           return nextBeat;
         });
-      }, intervalTime);
-    } else if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+        lastTimeRef.current = time;
+      }
+
+      if (isPlaying) {
+        animationFrameRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    if (isPlaying) {
+      animationFrameRef.current = requestAnimationFrame(tick);
+    } else if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
+      lastTimeRef.current = null;
     };
   }, [isPlaying, bpm, beatsPerMeasure, accentFirstBeat, subdivision]);
 

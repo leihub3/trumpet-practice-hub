@@ -19,6 +19,7 @@ const instrumentFiles = {
 const defaultSets = {
   set1: ["tabla", "tanpura", "bansuri"],
   set2: ["mridangam", "shehnai", "shrutiBox"],
+  set3: ["pakhawaj", "mridangam", "tabla"],
 };
 
 const HinduMusicDrone: React.FC = () => {
@@ -180,6 +181,9 @@ const HinduMusicDrone: React.FC = () => {
         </Button>
         <Button variant="contained" onClick={() => handleSelectSet("set2")} disabled={!playersLoaded}>
           Set 2
+        </Button>
+        <Button variant="contained" onClick={() => handleSelectSet("set3")} disabled={!playersLoaded}>
+          Set 3
         </Button>
       </div>
 
