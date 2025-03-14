@@ -35,15 +35,19 @@ const ChromaticTuner: React.FC = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const source = audioCtx.createMediaStreamSource(stream);
       const gainNode = audioCtx.createGain();
-      gainNode.gain.value = 2; // Increase gain (adjust as needed)
+      gainNode.gain.value = 1; // Adjust gain to reduce noise
       const lowPassFilter = audioCtx.createBiquadFilter();
       lowPassFilter.type = 'lowpass';
       lowPassFilter.frequency.value = 1000; // Adjust frequency as needed
+      const highPassFilter = audioCtx.createBiquadFilter();
+      highPassFilter.type = 'highpass';
+      highPassFilter.frequency.value = 80; // Filter out low-frequency noise
       const analyserNode = audioCtx.createAnalyser();
       analyserNode.fftSize = 4096; // Increase fftSize for higher resolution
       source.connect(gainNode);
       gainNode.connect(lowPassFilter);
-      lowPassFilter.connect(analyserNode);
+      lowPassFilter.connect(highPassFilter);
+      highPassFilter.connect(analyserNode);
       setAudioContext(audioCtx);
       setAnalyser(analyserNode);
       return () => {
