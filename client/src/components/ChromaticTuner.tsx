@@ -7,7 +7,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
-import { Box } from '@mui/material';
+import { Box, Typography, Slider } from '@mui/material';
 import { getNoteInfo } from '../utils/noteUtils';
 
 const ChromaticTuner: React.FC = () => {
@@ -20,6 +20,8 @@ const ChromaticTuner: React.FC = () => {
   const [useSharps, setUseSharps] = useState<boolean>(true);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [a4Frequency, setA4Frequency] = useState<number>(440);
+  const [clarity, setClarity] = useState<number>(0);
+  const [noiseSuppressionEnabled, setNoiseSuppressionEnabled] = useState<boolean>(true);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -44,10 +46,26 @@ const ChromaticTuner: React.FC = () => {
       highPassFilter.frequency.value = 80; // Filter out low-frequency noise
       const analyserNode = audioCtx.createAnalyser();
       analyserNode.fftSize = 4096; // Increase fftSize for higher resolution
+      const noiseGate = audioCtx.createDynamicsCompressor();
+      noiseGate.threshold.setValueAtTime(-50, audioCtx.currentTime); // Adjust threshold to filter out background noise
+      noiseGate.knee.setValueAtTime(40, audioCtx.currentTime);
+      noiseGate.ratio.setValueAtTime(12, audioCtx.currentTime);
+      noiseGate.attack.setValueAtTime(0, audioCtx.currentTime);
+      noiseGate.release.setValueAtTime(0.25, audioCtx.currentTime);
+      const noiseSuppression = audioCtx.createBiquadFilter();
+      noiseSuppression.type = 'notch';
+      noiseSuppression.frequency.value = 60; // Suppress 60Hz noise
+      noiseSuppression.Q.value = 10; // Quality factor for the notch filter
       source.connect(gainNode);
       gainNode.connect(lowPassFilter);
       lowPassFilter.connect(highPassFilter);
-      highPassFilter.connect(analyserNode);
+      highPassFilter.connect(noiseGate);
+      if (noiseSuppressionEnabled) {
+        noiseGate.connect(noiseSuppression);
+        noiseSuppression.connect(analyserNode);
+      } else {
+        noiseGate.connect(analyserNode);
+      }
       setAudioContext(audioCtx);
       setAnalyser(analyserNode);
       return () => {
@@ -72,7 +90,7 @@ const ChromaticTuner: React.FC = () => {
       if (audioContext) audioContext.close();
       if (analyser) analyser.disconnect();
     };
-  }, []);
+  }, [noiseSuppressionEnabled]);
 
   useEffect(() => {
     if (!analyser || !audioContext) return;
@@ -84,20 +102,21 @@ const ChromaticTuner: React.FC = () => {
       const detector = PitchDetector.forFloat32Array(bufferLength);
       const [pitch, clarity] = detector.findPitch(dataArray, audioContext.sampleRate);
 
-      if (clarity > 0.9) {
+      if (clarity > 0.95) { // Increase clarity threshold for more stable readings
         setFrequencyHistory((prevHistory) => {
-          const newHistory = [...prevHistory, pitch].slice(-5); // Reduce history length for faster smoothing
+          const newHistory = [...prevHistory, pitch].slice(-20); // Increase history length for better smoothing
           const smoothedFrequency = newHistory.reduce((a, b) => a + b, 0) / newHistory.length;
           setFrequency(smoothedFrequency);
           const { note, centsOff } = getNoteInfo(smoothedFrequency, useSharps, a4Frequency);
           setNote(note);
           setCents(centsOff);
+          setClarity(clarity);
           return newHistory;
         });
       }
     };
 
-    const interval = setInterval(detectPitch, 100);
+    const interval = setInterval(detectPitch, 100); // Adjust interval for faster/slower updates
 
     return () => clearInterval(interval);
   }, [analyser, audioContext, useSharps, a4Frequency]);
@@ -160,6 +179,10 @@ const ChromaticTuner: React.FC = () => {
                 <IconButton onClick={() => setA4Frequency(a4Frequency + 1)}>+</IconButton>
               </div>
             </MenuItem>
+            <MenuItem>
+              <Switch checked={noiseSuppressionEnabled} onChange={() => setNoiseSuppressionEnabled(!noiseSuppressionEnabled)} />
+              Noise Suppression
+            </MenuItem>
           </Menu>
         </Box>
       </Box>
@@ -181,6 +204,9 @@ const ChromaticTuner: React.FC = () => {
       <p className="note-container" style={noteContainerStyle}>
         {note && note.length > 1 ? extractNoteAndOctave(note).note : note}
       </p>
+      <Typography variant="body2" color="primary">
+        Clarity: {Math.round(clarity * 100)}%
+      </Typography>
     </div>
   );
 };
